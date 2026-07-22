@@ -1,0 +1,55 @@
+# golangci-lint configuration (schema v2).
+# Run locally with: golangci-lint run
+version: "2"
+
+run:
+  timeout: 5m
+
+# Report every finding: the default caps (max-issues-per-linter: 50,
+# max-same-issues: 3) hide most of the exported-doc work, so turn them off
+# and keep the tree genuinely clean rather than clean-looking.
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  # Start from the curated default set (errcheck, govet, ineffassign,
+  # staticcheck, unused) and add the linters the Go community most
+  # commonly runs on top of it.
+  default: standard
+  enable:
+    - bodyclose      # HTTP/response bodies are closed
+    - copyloopvar    # loop-variable capture bugs
+    - dupword        # duplicated words in comments/strings
+    - errorlint      # correct error wrapping / comparison
+    - gocritic       # broad set of correctness & style checks
+    - gosec          # common security issues
+    - misspell       # misspellings in comments and strings
+    - nilerr         # returning nil after a non-nil error
+    - prealloc       # slices that could be preallocated
+    - revive         # golint's successor; general style/lint
+    - unconvert      # redundant type conversions
+    - usestdlibvars  # use stdlib constants instead of literals
+    - whitespace     # leading/trailing whitespace
+
+  settings:
+    gosec:
+      excludes:
+        # G115: integer overflow on byte<->int conversions is the whole
+        # point of an 8-bit hardware simulation (register wrap-around).
+        - G115
+
+  exclusions:
+    rules:
+      # "Yuu Yuu Hakusho" is a real game title, not a repeated word.
+      - linters: [dupword]
+        source: 'Yuu Yuu'
+      # blargg ROMs emit their own expected text ("W- W-", etc.); the
+      # golden strings must match the ROM byte-for-byte.
+      - path: test/blargg_cpu_extra_test\.go
+        linters: [dupword]
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true # test/assets embeds ROMs from submodules; the linter type-checks _test.go too
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          check-latest: true
+
+      - name: golangci-lint
+        # v7+ of the action installs golangci-lint v2, which the
+        # .golangci.yml (version: "2") config requires.
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true # test ROMs live under test/assets/ as submodules
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          check-latest: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./...
+
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          check-latest: true
+
+      - name: Ebitengine build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libxcursor-dev libxi-dev \
+            libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
+
+      # examples/nes is its own module (so the core keeps zero deps),
+      # which also means the root go vet/test above never sees it.
+      # -o /dev/null keeps the binary out of the working tree.
+      - name: build example
+        run: cd examples/nes && go vet ./... && go build -o /dev/null .
