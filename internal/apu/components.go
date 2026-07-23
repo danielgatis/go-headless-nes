@@ -77,8 +77,7 @@ func (l *lengthCounter) load(value byte) {
 func (l *lengthCounter) status() bool   { return l.counter > 0 }
 func (l *lengthCounter) isHalted() bool { return l.halt }
 
-// reload applies a pending length load after the frame counter clocked
-// .
+// reload applies a pending length load after the frame counter clocked.
 func (l *lengthCounter) reload() {
 	if l.reloadValue != 0 {
 		if l.counter == l.previousValue {

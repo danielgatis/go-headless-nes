@@ -117,8 +117,7 @@ func (p *PPU) ReadRegister(addr uint16) byte {
 	return p.applyOpenBus(openBusMask, returnValue)
 }
 
-// PeekRegister is ReadRegister without side effects, for debuggers
-// .
+// PeekRegister is ReadRegister without side effects, for debuggers.
 func (p *PPU) PeekRegister(addr uint16) byte {
 	openBusMask := byte(0xFF)
 	returnValue := byte(0)

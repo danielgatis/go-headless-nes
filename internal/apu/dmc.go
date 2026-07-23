@@ -47,8 +47,7 @@ func (d *DMC) initSample() {
 	}
 }
 
-// startTransfer requests a DMA fetch when the buffer needs a byte
-// .
+// startTransfer requests a DMA fetch when the buffer needs a byte.
 func (d *DMC) startTransfer() {
 	if d.BufferEmpty && d.BytesLeft > 0 && d.requestDMA != nil {
 		d.requestDMA()
@@ -124,8 +123,7 @@ func (d *DMC) run(targetCycle uint32) {
 	}
 }
 
-// processClock handles the transfer/disable delay counters each APU cycle
-// .
+// processClock handles the transfer/disable delay counters each APU cycle.
 func (d *DMC) processClock() {
 	if d.DisableDelay != 0 {
 		d.DisableDelay--

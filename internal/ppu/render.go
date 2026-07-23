@@ -476,8 +476,7 @@ func (p *PPU) processSpriteEvaluation() {
 
 // --- Scanline dispatch ---
 
-// processScanline runs cycles 1..340 of a visible/pre-render scanline
-// .
+// processScanline runs cycles 1..340 of a visible/pre-render scanline.
 func (p *PPU) processScanline() {
 	switch {
 	case p.Cycle <= 256:
@@ -587,8 +586,7 @@ func (p *PPU) processScanline() {
 	}
 }
 
-// processRenderingDisabledPixel handles cycles 1-256 with rendering off
-// .
+// processRenderingDisabledPixel handles cycles 1-256 with rendering off.
 func (p *PPU) processRenderingDisabledPixel() {
 	if p.Scanline >= 0 {
 		p.processSpriteShifters()

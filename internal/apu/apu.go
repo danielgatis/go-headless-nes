@@ -172,8 +172,7 @@ func (a *APU) Tick() {
 	a.synthTick()
 }
 
-// needToRun reports whether the channels must be advanced this cycle
-// .
+// needToRun reports whether the channels must be advanced this cycle.
 func (a *APU) needToRun(currentCycle uint32) bool {
 	if a.DMC.needToRun() || a.NeedRun {
 		a.NeedRun = false
@@ -183,8 +182,7 @@ func (a *APU) needToRun(currentCycle uint32) bool {
 	return a.Frame.needToRun(cyclesToRun)
 }
 
-// run advances the frame counter and all channels up to CurrentCycle
-// .
+// run advances the frame counter and all channels up to CurrentCycle.
 func (a *APU) run() {
 	cyclesToRun := int32(a.CurrentCycle) - int32(a.PreviousCycle)
 	for cyclesToRun > 0 {
@@ -219,8 +217,7 @@ func (a *APU) endFrame() {
 	a.PreviousCycle = 0
 }
 
-// frameCounterTick clocks the channels' envelope/linear/length/sweep units
-// .
+// frameCounterTick clocks the channels' envelope/linear/length/sweep units.
 func (a *APU) frameCounterTick(t frameType) {
 	a.Pulse1.tickEnvelope()
 	a.Pulse2.tickEnvelope()
