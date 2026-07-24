@@ -562,7 +562,7 @@ func (p *PPU) processScanline() {
 				}
 			}
 
-			if p.Scanline == -1 && p.Cycle == 339 && p.Frame&0x01 != 0 {
+			if p.dotSkip && p.Scanline == -1 && p.Cycle == 339 && p.Frame&0x01 != 0 {
 				// Odd-frame skipped dot (NTSC): jump from 339 to 340->0.
 				p.Cycle = 340
 				p.DotSkipped = 3

@@ -1,10 +1,13 @@
 package cartridge
 
 import (
+	"hash/crc32"
 	"io"
 	"os"
 
 	"github.com/danielgatis/go-headless-nes/internal/errs"
+	"github.com/danielgatis/go-headless-nes/internal/gamedb"
+	"github.com/danielgatis/go-headless-nes/internal/region"
 )
 
 // iNES file layout: 16-byte header, optional 512-byte trainer,
@@ -40,9 +43,9 @@ func LoadFile(path string) (*Cartridge, error) {
 }
 
 // Load parses an iNES or NES 2.0 ROM image. NES 2.0 contributes the
-// extended mapper bits, the submapper, and the larger bank-count field;
-// the exotic size encodings and region fields are not needed for the
-// boards this emulator emulates.
+// extended mapper bits, the submapper, the larger bank-count field, and
+// the finer region encoding; the exotic size encodings are not needed
+// for the boards this emulator emulates.
 func Load(r io.Reader) (*Cartridge, error) {
 	var h [headerSize]byte
 	if _, err := io.ReadFull(r, h[:]); err != nil {
@@ -80,6 +83,23 @@ func Load(r io.Reader) (*Cartridge, error) {
 		}
 		prgBanks |= int(h[9]&0x0F) << 8
 		chrBanks |= int(h[9]>>4) << 8
+		// Byte 12 bits 0-1: 0=NTSC, 1=PAL, 2=multi-region, 3=Dendy. A
+		// multi-region cartridge runs on NTSC hardware here.
+		switch h[12] & 0x03 {
+		case 1:
+			c.Region = region.PAL
+		case 3:
+			c.Region = region.Dendy
+		default:
+			c.Region = region.NTSC
+		}
+	} else {
+		// iNES 1.0 byte 9 bit 0: 0=NTSC, 1=PAL.
+		if h[9]&0x01 != 0 {
+			c.Region = region.PAL
+		} else {
+			c.Region = region.NTSC
+		}
 	}
 
 	if prgBanks == 0 {
@@ -108,10 +128,15 @@ func Load(r io.Reader) (*Cartridge, error) {
 		}
 	}
 
+	// The cartridge database is keyed by the CRC32 of the raw PRG then CHR
+	// data, exactly as dumped, so accumulate it before PRG is mirrored.
+	crc := crc32.NewIEEE()
+
 	c.PRG = make([]byte, prgBanks*prgUnit)
 	if _, err := io.ReadFull(r, c.PRG); err != nil {
 		return nil, errs.Wrap(err, "reading PRG ROM")
 	}
+	_, _ = crc.Write(c.PRG)
 	// A 16 KiB PRG ROM on a board with a 32 KiB window repeats through
 	// the unconnected address line. Pre-mirroring keeps every mapper's
 	// bank arithmetic safe regardless of window size.
@@ -123,6 +148,47 @@ func Load(r io.Reader) (*Cartridge, error) {
 		if _, err := io.ReadFull(r, c.CHR); err != nil {
 			return nil, errs.Wrap(err, "reading CHR ROM")
 		}
+		_, _ = crc.Write(c.CHR)
 	}
+
+	// The database corrects headers that misreport the TV system, mirroring
+	// or mapper. When a ROM is listed, its fields win over the header, the
+	// same policy the reference emulator follows.
+	applyDatabase(c, crc.Sum32())
 	return c, nil
+}
+
+// applyDatabase overrides header-derived fields with the cartridge
+// database entry for crc, when one exists. It mirrors the reference
+// emulator's precedence: the database wins on the fields this core models
+// (TV system, mapper and submapper, mirroring, battery).
+func applyDatabase(c *Cartridge, crc uint32) {
+	e, ok := gamedb.Lookup(crc)
+	if !ok {
+		return
+	}
+	c.Region = e.Region
+	if e.HasMapper {
+		c.MapperID = e.MapperID
+		c.Submapper = e.Submapper
+	}
+	switch e.Mirroring {
+	case 'h':
+		c.Mirroring = Horizontal
+	case 'v':
+		c.Mirroring = Vertical
+	case '4':
+		c.Mirroring = FourScreen
+	case '0':
+		c.Mirroring = SingleLow
+	case '1':
+		c.Mirroring = SingleHigh
+	}
+	// A validated row's battery flag is authoritative; an unvalidated row
+	// can only add a battery, never clear the header's.
+	if e.Validated {
+		c.HasBattery = e.HasBattery
+	} else {
+		c.HasBattery = c.HasBattery || e.HasBattery
+	}
 }

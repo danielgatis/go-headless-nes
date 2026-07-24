@@ -168,6 +168,16 @@ func (d *DMC) ClearDMAHooks() {
 	d.stopDMA = nil
 }
 
+// ClearRegionTables nils the per-region table pointers on the channels.
+// Like the DMA hooks they are wiring the machine re-seats on Restore
+// (ReinstallRegionTables) and never serializes, so a round-trip test
+// drops them before comparing.
+func (s *State) ClearRegionTables() {
+	s.Frame.stepCycles = nil
+	s.Noise.periodTable = nil
+	s.DMC.periodTable = nil
+}
+
 func (f *frameCounter) append(w *serial.Writer) {
 	w.I32(f.previousCycle)
 	w.U32(f.currentStep)

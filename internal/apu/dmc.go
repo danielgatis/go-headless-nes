@@ -32,12 +32,21 @@ type DMC struct {
 	// hooks installed by the machine (cpu.StartDmcTransfer / StopDmcTransfer)
 	requestDMA func()
 	stopDMA    func()
+
+	// periodTable points at the region's rate table. Wiring, not state:
+	// the APU re-seats it after a snapshot restore, so it is not serialized.
+	periodTable *[16]uint16
 }
 
-// NTSC DMC rate table.
-var dmcPeriodTable = [16]uint16{
-	428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54,
-}
+// DMC rate tables. Dendy uses the NTSC table.
+var (
+	dmcPeriodTableNTSC = [16]uint16{
+		428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54,
+	}
+	dmcPeriodTablePAL = [16]uint16{
+		398, 354, 316, 298, 276, 236, 210, 198, 176, 148, 132, 118, 98, 78, 66, 50,
+	}
+)
 
 func (d *DMC) initSample() {
 	d.CurrentAddr = d.SampleAddr
@@ -170,7 +179,7 @@ func (d *DMC) reset(softReset bool) {
 	d.TransferStartDelay = 0
 	d.DisableDelay = 0
 	d.IRQ = false
-	d.tmr.setPeriod(dmcPeriodTable[0] - 1)
+	d.tmr.setPeriod(d.periodTable[0] - 1)
 	d.tmr.setTimer(d.tmr.getPeriod())
 }
 
@@ -178,7 +187,7 @@ func (d *DMC) reset(softReset bool) {
 func (d *DMC) writeControl(v byte) {
 	d.IRQEnable = v&0x80 == 0x80
 	d.Loop = v&0x40 == 0x40
-	d.tmr.setPeriod(dmcPeriodTable[v&0x0F] - 1)
+	d.tmr.setPeriod(d.periodTable[v&0x0F] - 1)
 	if !d.IRQEnable {
 		d.IRQ = false
 	}

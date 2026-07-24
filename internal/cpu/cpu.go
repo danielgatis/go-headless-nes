@@ -5,7 +5,10 @@
 // transfers with RDY-halt / dummy-read behavior.
 package cpu
 
-import "github.com/danielgatis/go-headless-nes/internal/bus"
+import (
+	"github.com/danielgatis/go-headless-nes/internal/bus"
+	"github.com/danielgatis/go-headless-nes/internal/region"
+)
 
 // sysHooks is what the CPU calls into the rest of the machine on each bus
 // cycle: clockStart runs the other chips up to the access point of a cycle,
@@ -37,11 +40,14 @@ const (
 	VecIRQ   = 0xFFFE
 )
 
-// Master-clock split constants, NTSC. A read access lands at masterClock+5, a write at masterClock+7.
+// Master-clock split, NTSC defaults. A CPU cycle advances the master
+// clock by startClockCount+endClockCount ticks (12 on NTSC, 16 on PAL,
+// 15 on Dendy); the read/write access point sits one tick either side of
+// the midpoint, so a read lands at masterClock+5 and a write at +7 on
+// NTSC. Configure overwrites these per region.
 const (
-	startClockCount = 6
-	endClockCount   = 6
-	cpuDivider      = 12
+	defaultStartClockCount = 6
+	defaultEndClockCount   = 6
 )
 
 // Registers is the programmer-visible CPU state. It is a plain value so
@@ -100,6 +106,12 @@ type CPU struct {
 	mem *bus.Memory
 	sysHooks
 
+	// Per-region master-clock split (see the default constants). Set by
+	// Configure; not part of State, since the region is fixed for a machine
+	// and never enters a snapshot.
+	startClockCount uint64
+	endClockCount   uint64
+
 	instAddrMode addrMode // current instruction's addressing mode
 	operand      uint16   // resolved operand (address or value)
 	cpuWrite     bool     // true during a write access
@@ -114,12 +126,33 @@ type CPU struct {
 // New returns a 6502 wired to the given address space, in power-on state.
 func New(mem *bus.Memory) *CPU {
 	c := &CPU{mem: mem}
+	c.startClockCount = defaultStartClockCount
+	c.endClockCount = defaultEndClockCount
 	c.ppuOffset = 1
 	c.Reg.SP = 0
 	c.Reg.P = FlagU
 	c.Reset()
 	return c
 }
+
+// Configure applies a region's master-clock split. It changes only the
+// per-cycle increment, so it is safe to call live: the very next cycle
+// advances the master clock by the new divider, with no reset and no jump
+// in the clock position (matching how a real region switch behaves). Use
+// SeedMasterClock once at power-on to place the clock origin.
+func (c *CPU) Configure(p region.Params) {
+	c.startClockCount = p.CPUStartClock
+	c.endClockCount = p.CPUEndClock
+}
+
+// SeedMasterClock places the master clock at one divider's worth of
+// ticks, the power-on origin. Reset does the same; New calls this after
+// Configure so the origin reflects the region's divider without re-running
+// the reset sequence's stack adjustment.
+func (c *CPU) SeedMasterClock() { c.masterClock = c.cpuDivider() }
+
+// cpuDivider is the master-clock ticks per CPU cycle (start+end).
+func (c *CPU) cpuDivider() uint64 { return c.startClockCount + c.endClockCount }
 
 // SetTicker installs the per-cycle machine callbacks. clockStart runs the
 // pre-access portion of a cycle, clockEnd the post-access portion; sample
@@ -189,7 +222,7 @@ func (c *CPU) Reset() {
 	// callbacks are wired) lands CycleCount at 0 and keeps the CPU/PPU clocks
 	// aligned on the shared master clock.
 	c.Cycles = ^uint64(0) // (uint64)-1
-	c.masterClock = cpuDivider
+	c.masterClock = c.cpuDivider()
 }
 
 // RunResetCycles runs the eight CPU cycles the 2A03 spends before it fetches
@@ -269,9 +302,9 @@ func (c *CPU) oamWrite(v byte) { c.mem.Write(0x2004, v) }
 // portion here and bump the cycle counter.
 func (c *CPU) startCycle(forRead bool) {
 	if forRead {
-		c.masterClock += startClockCount - 1
+		c.masterClock += c.startClockCount - 1
 	} else {
-		c.masterClock += startClockCount + 1
+		c.masterClock += c.startClockCount + 1
 	}
 	// The cycle count is bumped before the per-cycle device clock so the audio
 	// unit and controller see the new count (as hardware does: the PPU is run
@@ -289,9 +322,9 @@ func (c *CPU) startCycle(forRead bool) {
 // and IRQ pipeline shift one cycle here.
 func (c *CPU) endCycle(forRead bool) {
 	if forRead {
-		c.masterClock += endClockCount + 1
+		c.masterClock += c.endClockCount + 1
 	} else {
-		c.masterClock += endClockCount - 1
+		c.masterClock += c.endClockCount - 1
 	}
 	if c.clockEnd != nil {
 		c.clockEnd()

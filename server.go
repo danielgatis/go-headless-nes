@@ -114,6 +114,8 @@ func (s *Server) dispatch(f Frame) error {
 		return s.poke(f.Payload)
 	case OpGetState:
 		return s.withConsole(s.getState)
+	case OpSetRegion:
+		return s.setRegion(f.Payload)
 
 	case OpAddBreak:
 		return s.breakOp(f.Payload, true)
@@ -223,6 +225,19 @@ func (s *Server) setInput(payload []byte) error {
 		s.console.SetButtons(1, payload[1])
 	}
 	return nil
+}
+
+func (s *Server) setRegion(payload []byte) error {
+	if len(payload) != 1 {
+		return errs.Errorf("SetRegion expects 1 byte, got %d", len(payload))
+	}
+	if payload[0] > byte(RegionDendy) {
+		return errs.Errorf("SetRegion: unknown region %d", payload[0])
+	}
+	return s.withConsole(func() error {
+		s.console.SetRegion(Region(payload[0]))
+		return nil
+	})
 }
 
 func (s *Server) saveState() error {

@@ -2,10 +2,6 @@ package apu
 
 import "math"
 
-// cpuHz is the NTSC CPU clock: the 21.477272 MHz master clock divided
-// by 12.
-const cpuHz = 21477272 / 12
-
 // Band-limited synthesis, the technique behind blargg's blip_buf (as
 // used by LaiNES and most accurate emulators). Sampling the mixer at
 // output times folds the square waves' high harmonics back into the
@@ -87,9 +83,9 @@ func (a *APU) synthTick() {
 		a.addDelta(level - a.synth.lastLevel)
 		a.synth.lastLevel = level
 	}
-	a.SampleAcc += emitRate
-	if a.SampleAcc >= cpuHz {
-		a.SampleAcc -= cpuHz
+	a.SampleAcc += a.emitRate
+	if a.SampleAcc >= a.cpuHz {
+		a.SampleAcc -= a.cpuHz
 		a.emitSample()
 	}
 }
@@ -102,8 +98,8 @@ func (a *APU) synthTick() {
 // blipHalfWidth samples (0.2 ms) — pure latency, no distortion.
 func (a *APU) addDelta(d float32) {
 	pos := a.SampleAcc * blipPhases
-	phase := pos / cpuHz
-	frac := float32(pos-phase*cpuHz) / float32(cpuHz)
+	phase := pos / a.cpuHz
+	frac := float32(pos-phase*a.cpuHz) / float32(a.cpuHz)
 	lo, hi := &blipKernel[phase], &blipKernel[phase+1]
 	for t := range blipTaps {
 		k := lo[t] + frac*(hi[t]-lo[t])

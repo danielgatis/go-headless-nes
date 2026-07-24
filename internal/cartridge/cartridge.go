@@ -2,6 +2,8 @@
 // to the mapper layer.
 package cartridge
 
+import "github.com/danielgatis/go-headless-nes/internal/region"
+
 // Mirroring selects how the two physical nametables in console VRAM map
 // onto the four logical nametable slots at PPU $2000-$2FFF. It is a
 // property of the cartridge PCB: solder pads (or the mapper) choose it.
@@ -48,4 +50,9 @@ type Cartridge struct {
 	Submapper  byte   // NES 2.0 only; 0 otherwise
 	Mirroring  Mirroring
 	HasBattery bool
+
+	// Region is the TV system declared by the header, resolved to a
+	// concrete system (never Auto). A console auto-detects from this at
+	// power-on; the runtime override can ignore it.
+	Region region.Region
 }

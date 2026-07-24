@@ -81,12 +81,25 @@ desyncing.
 | `Peek`      | 0x08 | 2 bytes: addr                    | `Value`         |
 | `Poke`      | 0x09 | 3 bytes: addr(2) + value(1)      | none |
 | `GetState`  | 0x0A | *(empty)*                        | `State`         |
+| `SetRegion` | 0x0B | 1 byte: 0 auto, 1 NTSC, 2 PAL, 3 Dendy | none |
 
 `RunFrame` applies the current input to both controllers, runs to the end
 of the video frame (or until a breakpoint or watchpoint halts it), and
 emits a `Video` then an `Audio` event. If it halted early it also emits
 `Stop`. `Step` runs exactly one CPU instruction and emits the `State`
 block.
+
+`LoadROM` auto-detects the TV system from the header (iNES byte 9 or NES
+2.0 byte 12), corrected against a built-in cartridge database keyed by the
+ROM's CRC, since many dumps misreport their region. `SetRegion` overrides
+it afterward: `0` re-detects from the cartridge, `1`/`2`/`3` force
+NTSC/PAL/Dendy. The switch is live and does
+not reset the console: the master-clock dividers, PPU frame geometry and
+APU rate tables take effect on the next cycle, so a PAL game whose header
+wrongly says NTSC (and so runs ~20% fast) is corrected mid-play with one
+command. Region is a fixed property of the machine, so it is not carried
+in a snapshot. The opcode is additive and does not change the protocol
+version; a client that never sends it keeps the auto-detected region.
 
 Controller button bits (`SetInput` payload, one byte per pad):
 

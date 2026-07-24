@@ -43,8 +43,24 @@ func main() {
 
 The full surface mirrors the protocol one-to-one: `Step`, `Reset`,
 `Peek`/`Poke`/`ReadMem`, `SaveState`/`LoadState`, `State`, breakpoints and
-watchpoints, `Disasm`, `SetTrace`, `PatchPRG`/`PatchCHR`/`ReadPRG`/`ReadCHR`
-and mapper state.
+watchpoints, `Disasm`, `SetTrace`, `PatchPRG`/`PatchCHR`/`ReadPRG`/`ReadCHR`,
+mapper state, and `SetRegion`.
+
+`NewConsole` auto-detects the TV system from the ROM header, corrected
+against a built-in cartridge database (many dumps misreport the region),
+so most consumers never touch it. `SetRegion(RegionPAL)` (or `RegionNTSC`,
+`RegionDendy`, or `RegionAuto` to re-detect) overrides it at runtime: the
+master-clock dividers, PPU frame geometry and APU rates change on the next
+cycle, live and without a reset. That is how you fix a PAL game whose
+header wrongly claims NTSC, which otherwise runs about 20% too fast. The
+region is a fixed property of the machine, so it does not travel in a save
+state.
+
+Your frontend must also drive frames at the region's rate: `FrameRate`
+returns ~60 on NTSC and ~50 on PAL/Dendy. Pinning the loop to 60 (a fixed
+60 Hz tick, say) plays PAL content ~20% fast even with the timing correct
+inside the core, so switch the loop's rate whenever the region changes.
+The example does this with `ebiten.SetTPS`.
 
 Each `Console` is a self-contained instance, so if you want N emulators
 you just create N consoles. A `Console` is not safe for concurrent use;

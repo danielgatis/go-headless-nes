@@ -31,6 +31,9 @@ and its primitives.
   trace.
 - **Live patching**: edit RAM, ROM and mapper registers while the game
   runs.
+- **Regions**: NTSC, PAL and Dendy, auto-detected from the header and a
+  built-in cartridge database (which corrects dumps that misreport their
+  region), and overridable at runtime.
 - **Binary protocol**: drive the core from any language over
   stdin/stdout or TCP.
 

@@ -16,20 +16,22 @@
 // detected; reloads always take effect here.
 package apu
 
-import "github.com/danielgatis/go-headless-nes/internal/bus"
+import (
+	"github.com/danielgatis/go-headless-nes/internal/bus"
+	"github.com/danielgatis/go-headless-nes/internal/region"
+)
 
 // SampleRate is the audio device's playback rate.
 const SampleRate = 44100
 
-// emitRate is how many samples the APU produces per emulated second.
-// It is deliberately higher than SampleRate: UI drivers run one
-// emulated frame per 60 Hz display update, but an emulated NTSC second
-// is 60.0988 frames, so emulated time passes 0.165% slower than real
-// time. Emitting proportionally more samples (44100 x 60.0988/60)
-// makes production match the device's real-time consumption, keeping
-// the delivery buffer balanced ("sync to video"); the equivalent
-// -0.165% pitch shift is far below audibility.
-const emitRate = 44173
+// The emit rate is how many samples the APU produces per emulated second
+// (Params.EmitRate). It is deliberately higher than SampleRate: UI
+// drivers run one emulated frame per display refresh, but an emulated
+// second is slightly more than the refresh count of frames (NTSC 60.0988
+// vs 60), so emitting proportionally more samples makes production match
+// the device's real-time consumption, keeping the delivery buffer
+// balanced ("sync to video"); the equivalent sub-percent pitch shift is
+// far below audibility.
 
 // sampleRingSize must hold a few frames of samples (735 per frame)
 // between frontend drains.
@@ -86,6 +88,13 @@ type APU struct {
 
 	synth synth
 
+	// Per-region audio rates and the resolved region (for re-seating the
+	// channel table pointers after a snapshot restore). Not part of State:
+	// the region is fixed for a machine and never enters a snapshot.
+	region   region.Region
+	cpuHz    int
+	emitRate int
+
 	samples [sampleRingSize]float32
 	sampleR int
 	sampleW int
@@ -125,9 +134,41 @@ func New(requestDMA, stopDMA func()) *APU {
 	a.Pulse1.IsChannel1 = true
 	a.DMC.requestDMA = requestDMA
 	a.DMC.stopDMA = stopDMA
+	// Default to NTSC so the tables are seated before the reset seeds the
+	// noise/DMC periods from them; Configure overrides for other regions.
+	a.Configure(region.ParamsFor(region.NTSC))
 	a.reset(false)
 	return a
 }
+
+// Configure applies a region's audio rates and installs the matching
+// channel tables. Call it before the reset that seeds channel periods.
+func (a *APU) Configure(p region.Params) {
+	a.cpuHz = p.CPUHz
+	a.emitRate = p.EmitRate
+	a.installRegionTables(p.Region)
+}
+
+// installRegionTables re-seats the channel table pointers for the region.
+// It runs at configuration time and again after a snapshot restore, which
+// overwrites the channel structs (and their pointers) wholesale.
+func (a *APU) installRegionTables(r region.Region) {
+	a.region = r
+	if r == region.PAL {
+		a.Frame.stepCycles = &frameStepCyclesPAL
+		a.Noise.periodTable = &noisePeriodTablePAL
+		a.DMC.periodTable = &dmcPeriodTablePAL
+		return
+	}
+	// NTSC and Dendy share the NTSC APU tables.
+	a.Frame.stepCycles = &frameStepCyclesNTSC
+	a.Noise.periodTable = &noisePeriodTableNTSC
+	a.DMC.periodTable = &dmcPeriodTableNTSC
+}
+
+// ReinstallRegionTables re-seats the channel table pointers after a
+// snapshot restore replaced the APU State (and its table pointers).
+func (a *APU) ReinstallRegionTables() { a.installRegionTables(a.region) }
 
 // Reset models the console's reset line reaching the APU (soft reset).
 func (a *APU) Reset() { a.reset(true) }

@@ -31,12 +31,12 @@ func TestPPURunsFrame(t *testing.T) {
 	p := New(&stubBoard{mirroring: cartridge.Horizontal})
 	// One NTSC frame is 341*262 dots = 89342; the master clock advances 4
 	// per dot. Run past one frame boundary.
-	target := uint64(89342 * masterClockDivider * 2)
+	target := uint64(89342 * defaultMasterClockDivider * 2)
 	p.Run(target)
 	if p.Frame == 0 {
 		t.Error("no frame completed after two frames of dots")
 	}
-	if p.Scanline < -1 || p.Scanline > vblankEnd {
+	if p.Scanline < -1 || p.Scanline > defaultVBlankEnd {
 		t.Errorf("scanline out of range: %d", p.Scanline)
 	}
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/danielgatis/go-headless-nes/internal/mapper"
 	core "github.com/danielgatis/go-headless-nes/internal/nes"
 	"github.com/danielgatis/go-headless-nes/internal/ppu"
+	"github.com/danielgatis/go-headless-nes/internal/region"
 	"github.com/danielgatis/go-headless-nes/internal/serial"
 )
 
@@ -135,6 +136,26 @@ func (c *Console) Step() Stop { return stopOf(c.debug.StepInstruction()) }
 
 // Reset presses the console's reset button.
 func (c *Console) Reset() { c.core.Reset() }
+
+// SetRegion switches the console's TV system (NTSC, PAL or Dendy) at
+// runtime, or re-detects the cartridge's own with RegionAuto. The switch
+// is live: the emulator keeps running and simply adopts the new timing on
+// its next cycle, without a reset, exactly as real hardware does. The
+// region is a fixed property of the machine, so it is not part of a save
+// state.
+func (c *Console) SetRegion(r Region) { c.core.SetRegion(region.Region(r)) }
+
+// Region reports the TV system currently in effect. It is always a
+// concrete system (never RegionAuto): after RegionAuto it reflects what
+// the cartridge resolved to.
+func (c *Console) Region() Region { return Region(c.core.Region()) }
+
+// FrameRate is how many emulated frames make one real second on the
+// current TV system (NTSC ~60.0988, PAL and Dendy ~50.0070). A real-time
+// frontend should run RunFrame this many times per second; a fixed-tick
+// loop should round it. Driving PAL content at NTSC's 60 runs it ~20%
+// fast, which is the usual "why is my PAL game too quick" bug.
+func (c *Console) FrameRate() float64 { return c.core.FrameRate() }
 
 // Video returns the current framebuffer: VideoWidth*VideoHeight NES color
 // indices (0-63). The slice aliases the live PPU buffer — read it before

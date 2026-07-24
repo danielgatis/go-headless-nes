@@ -42,6 +42,7 @@ const (
 	OpPeek      Op = 0x08
 	OpPoke      Op = 0x09
 	OpGetState  Op = 0x0A
+	OpSetRegion Op = 0x0B // 1 payload byte: 0=auto, 1=NTSC, 2=PAL, 3=Dendy
 
 	// Commands: debug (drive internal/debugger).
 

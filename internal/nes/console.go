@@ -11,6 +11,7 @@ import (
 	"github.com/danielgatis/go-headless-nes/internal/cpu"
 	"github.com/danielgatis/go-headless-nes/internal/mapper"
 	"github.com/danielgatis/go-headless-nes/internal/ppu"
+	"github.com/danielgatis/go-headless-nes/internal/region"
 )
 
 // NES is a whole console: the CPU, picture unit, audio unit, cartridge
@@ -25,6 +26,9 @@ type NES struct {
 
 	mem  *bus.Memory
 	ctrl *controller.Manager
+
+	// region is the resolved TV system currently in effect (never Auto).
+	region region.Params
 
 	// dmcRequest/dmcStop are the console's canonical DMC-DMA hooks, created
 	// once here so snapshot Restore can re-install them without allocating
@@ -212,6 +216,11 @@ func New(cart *cartridge.Cartridge) (*NES, error) {
 		c.APU.SetExternalAudio(src.AudioLevel)
 	}
 
+	// Apply the cartridge's TV system to every timed unit, then seed the
+	// master clock at the region's divider before the reset cycles run.
+	c.configureRegion(region.ParamsFor(cart.Region))
+	c.CPU.SeedMasterClock()
+
 	// Per-cycle machine callbacks and interrupt wiring.
 	c.CPU.SetTicker(c.clockBefore, c.clockAfter, c.sample)
 	c.PPU.SetNMICallback(c.CPU.SetNMILine)
@@ -221,6 +230,35 @@ func New(cart *cartridge.Cartridge) (*NES, error) {
 	// bringing the whole machine to the post-reset master-clock position.
 	c.CPU.RunResetCycles()
 	return c, nil
+}
+
+// configureRegion applies a resolved TV system to the CPU, PPU and APU.
+func (c *NES) configureRegion(p region.Params) {
+	c.region = p
+	c.CPU.Configure(p)
+	c.PPU.Configure(p)
+	c.APU.Configure(p)
+}
+
+// Region reports the TV system currently in effect (never Auto).
+func (c *NES) Region() region.Region { return c.region.Region }
+
+// FrameRate is how many emulated frames make one second on the current
+// TV system (NTSC ~60.0988, PAL/Dendy ~50.0070). A frontend should drive
+// this many frames per second.
+func (c *NES) FrameRate() float64 { return c.region.FPS }
+
+// SetRegion switches the console's TV system at runtime. Auto re-detects
+// from the cartridge header. The switch is live and does not reset the
+// console: the timed units simply pick up the new dividers, frame
+// geometry and audio tables on their next cycle, the same way real
+// hardware keeps running when its region is changed. The region is a
+// fixed property of the machine, so it is not part of a save state.
+func (c *NES) SetRegion(r region.Region) {
+	if r == region.Auto {
+		r = c.Cart.Region
+	}
+	c.configureRegion(region.ParamsFor(r))
 }
 
 // clockBefore opens a CPU cycle: run the PPU to the master-clock position of
@@ -305,8 +343,8 @@ func (c *NES) Peek(addr uint16) byte {
 // Write performs a side-effecting CPU-visible write (for tests and tooling).
 func (c *NES) Write(addr uint16, v byte) { c.mem.Write(addr, v) }
 
-// MasterClock is the shared master-clock position (21.477272 MHz ticks
-// since power-on).
+// MasterClock is the shared master-clock position in ticks since
+// power-on (21.477272 MHz on NTSC, 26.601712 MHz on PAL and Dendy).
 func (c *NES) MasterClock() uint64 { return c.CPU.MasterClock() }
 
 // Framebuffer is the last completed frame as NES color indices.

@@ -8,12 +8,21 @@ type Noise struct {
 
 	ShiftRegister uint16
 	ModeFlag      bool
+
+	// periodTable points at the region's period table. Wiring, not state:
+	// the APU re-seats it after a snapshot restore, so it is not serialized.
+	periodTable *[16]uint16
 }
 
-// NTSC noise period table.
-var noisePeriodTable = [16]uint16{
-	4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068,
-}
+// Noise period tables. Dendy uses the NTSC table.
+var (
+	noisePeriodTableNTSC = [16]uint16{
+		4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068,
+	}
+	noisePeriodTablePAL = [16]uint16{
+		4, 8, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708, 944, 1890, 3778,
+	}
+)
 
 func (n *Noise) isMuted() bool { return n.ShiftRegister&0x01 == 0x01 }
 
@@ -39,7 +48,7 @@ func (n *Noise) run(targetCycle uint32) {
 func (n *Noise) reset(softReset bool) {
 	n.Env.reset(softReset)
 	n.tmr.reset()
-	n.tmr.setPeriod(noisePeriodTable[0] - 1)
+	n.tmr.setPeriod(n.periodTable[0] - 1)
 	n.ShiftRegister = 1
 	n.ModeFlag = false
 }
@@ -48,7 +57,7 @@ func (n *Noise) reset(softReset bool) {
 func (n *Noise) writeControl(v byte) { n.Env.initialize(v) }
 
 func (n *Noise) writePeriod(v byte) {
-	n.tmr.setPeriod(noisePeriodTable[v&0x0F] - 1)
+	n.tmr.setPeriod(n.periodTable[v&0x0F] - 1)
 	n.ModeFlag = v&0x80 == 0x80
 }
 

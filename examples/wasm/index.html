@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>go-headless-nes — WebAssembly</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1rem;
+    background: #16161a; color: #e6e6e6;
+    font: 14px/1.5 system-ui, sans-serif;
+  }
+  h1 { font-size: 1rem; font-weight: 600; margin: 0; letter-spacing: .02em; }
+  /* Nearest-neighbour keeps the 256x240 output crisp when scaled up. */
+  canvas {
+    image-rendering: pixelated;
+    width: 512px; height: 480px;
+    background: #000; border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  }
+  .bar { display: flex; align-items: center; gap: 1rem; }
+  label.file {
+    padding: .5rem .9rem; background: #2a2a33; border-radius: 6px;
+    cursor: pointer; user-select: none;
+  }
+  label.file:hover { background: #34343f; }
+  input[type=file] { display: none; }
+  button {
+    padding: .5rem .9rem; background: #2a2a33; color: inherit;
+    border: 0; border-radius: 6px; cursor: pointer; font: inherit;
+  }
+  button:hover { background: #34343f; }
+  #status { opacity: .7; font-size: .85rem; min-height: 1.2em; }
+  kbd {
+    background: #2a2a33; border-radius: 4px; padding: .1em .4em;
+    font: inherit; font-size: .85em;
+  }
+  .keys { opacity: .6; font-size: .8rem; max-width: 512px; text-align: center; }
+</style>
+</head>
+<body>
+  <h1>go-headless-nes · WebAssembly</h1>
+  <canvas id="screen" width="256" height="240"></canvas>
+  <div class="bar">
+    <label class="file">
+      Load ROM (.nes)
+      <input id="rom" type="file" accept=".nes">
+    </label>
+    <button id="reset">Reset</button>
+  </div>
+  <div id="status">loading core…</div>
+  <p class="keys">
+    <kbd>←↑↓→</kbd> d-pad · <kbd>Z</kbd> B · <kbd>X</kbd> A ·
+    <kbd>Enter</kbd> Start · <kbd>Shift</kbd> Select · <kbd>R</kbd> reset<br>
+    <kbd>1</kbd> NTSC · <kbd>2</kbd> PAL · <kbd>3</kbd> Dendy · <kbd>0</kbd> auto
+  </p>
+
+<script src="wasm_exec.js"></script>
+<script>
+(() => {
+  const statusEl = document.getElementById("status");
+  const canvas = document.getElementById("screen");
+  const ctx = canvas.getContext("2d");
+
+  // Set once the Go side calls nesReady(). Until then, the exported
+  // nes* globals do not exist yet.
+  let ready = false;
+  let running = false;      // becomes true after a ROM loads
+  let imageData = null;     // canvas-backed RGBA buffer we reuse each frame
+  let rgba = null;          // Uint8ClampedArray view we hand to Go
+
+  // Audio runs on its own thread: an AudioWorklet drains a ring buffer at
+  // the hardware clock rate while we push each frame's samples into it. The
+  // ring absorbs the jitter of the rAF loop, so there is nothing to
+  // schedule by hand and no per-buffer gaps to hear as crackle.
+  let audioCtx = null;
+  let audioNode = null;
+
+  // Controller state, rebuilt from the keyboard each frame.
+  const held = new Set();
+  const keymap = {}; // filled once nesButtons is available
+
+  // Bring up the AudioContext and load the worklet. Returns a promise that
+  // resolves once audio is ready to receive samples.
+  async function initAudio() {
+    if (audioCtx) return;
+    // Let the browser open the context at the device's own rate; the
+    // worklet resamples the core's 44100 to whatever that turns out to be.
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    await audioCtx.audioWorklet.addModule("nes-audio-worklet.js");
+    audioNode = new AudioWorkletNode(audioCtx, "nes-audio", {
+      outputChannelCount: [1],
+      processorOptions: {
+        srcRate: nesSampleRate,
+        capacity: nesSampleRate, // ~1s of headroom
+      },
+    });
+    audioNode.connect(audioCtx.destination);
+  }
+
+  function currentButtons() {
+    let mask = 0;
+    for (const code in keymap) {
+      if (held.has(code)) mask |= keymap[code];
+    }
+    return mask;
+  }
+
+  // requestAnimationFrame fires at the display's refresh rate — 60, 120,
+  // 144Hz — which is NOT the NES's frame rate (60.0988 on NTSC, 50.0070 on
+  // PAL/Dendy). So rAF only decides *when* to run; a wall-clock accumulator
+  // decides *how many* frames to run, so the game advances at true NES
+  // speed on any monitor. frameMs comes from the core's region, so PAL
+  // content runs at 50 fps instead of NTSC's 60 (~20% too fast). (jsnes-web
+  // does the same thing in its FrameTimer; we keep the audio on an
+  // AudioWorklet ring instead of the deprecated ScriptProcessorNode, which
+  // lets that ring — not this loop — absorb jitter without crackle.)
+  let frameMs = 1000 / 60.0988;
+  let lastTick = 0;
+  let acc = 0; // ms of emulated time owed
+
+  // syncRegion re-reads the core's frame rate after a load or a region
+  // change and labels the current region in the status line.
+  function syncRegion(selected) {
+    frameMs = 1000 / nesFrameRate();
+    const resolved = nesRegion();
+    const tag = (selected && selected !== "auto") ? selected : "auto: " + resolved;
+    statusEl.textContent = "running [" + tag + "]";
+  }
+
+  function loop(now) {
+    if (!running) return;
+    requestAnimationFrame(loop);
+
+    if (!lastTick) lastTick = now;
+    let elapsed = now - lastTick;
+    lastTick = now;
+    // Tab was backgrounded (rAF pauses): don't try to replay the whole gap,
+    // just resume with one frame's worth of debt.
+    if (elapsed > 250) elapsed = frameMs;
+    acc += elapsed;
+
+    let ran = false;
+    while (acc >= frameMs) {
+      nesSetButtons(0, currentButtons());
+      nesRunFrame();
+      const samples = nesAudio();
+      if (samples.length) audioNode.port.postMessage(samples);
+      acc -= frameMs;
+      ran = true;
+    }
+
+    // Repaint once per rAF, only when a frame was actually produced.
+    if (ran) {
+      nesVideoRGBA(rgba);        // fills the canvas-backed buffer in place
+      ctx.putImageData(imageData, 0, 0);
+    }
+  }
+
+  async function startWith(rom) {
+    const err = nesLoadROM(rom);
+    if (err) { statusEl.textContent = "load failed: " + err; return; }
+
+    imageData = ctx.createImageData(nesVideoWidth, nesVideoHeight);
+    rgba = imageData.data;       // Uint8ClampedArray; Go writes RGBA here
+    await initAudio();
+    await audioCtx.resume();     // the file pick counts as the user gesture
+    selected = "auto";
+    syncRegion(selected);        // pace the loop at the auto-detected region
+    if (!running) {
+      running = true;
+      lastTick = 0; acc = 0;
+      requestAnimationFrame(loop);
+    }
+  }
+
+  // regionKeys maps a number key to (code, label): 0 auto, 1/2/3 forced.
+  const regionKeys = {
+    Digit0: [0, "auto"], Digit1: [1, "ntsc"], Digit2: [2, "pal"], Digit3: [3, "dendy"],
+    Numpad0: [0, "auto"], Numpad1: [1, "ntsc"], Numpad2: [2, "pal"], Numpad3: [3, "dendy"],
+  };
+  let selected = "auto";
+
+  // --- wiring, once the core is up -----------------------------------
+  window.nesReady = () => {
+    ready = true;
+    statusEl.textContent = "core ready — load a .nes ROM";
+    keymap["ArrowUp"]    = nesButtons.Up;
+    keymap["ArrowDown"]  = nesButtons.Down;
+    keymap["ArrowLeft"]  = nesButtons.Left;
+    keymap["ArrowRight"] = nesButtons.Right;
+    keymap["KeyZ"]       = nesButtons.B;
+    keymap["KeyX"]       = nesButtons.A;
+    keymap["Enter"]      = nesButtons.Start;
+    keymap["ShiftLeft"]  = nesButtons.Select;
+    keymap["ShiftRight"] = nesButtons.Select;
+  };
+
+  document.getElementById("rom").addEventListener("change", async (e) => {
+    if (!ready) return;
+    const file = e.target.files[0];
+    if (!file) return;
+    const buf = new Uint8Array(await file.arrayBuffer());
+    startWith(buf);
+  });
+
+  document.getElementById("reset").addEventListener("click", () => {
+    if (running) nesReset();
+  });
+
+  addEventListener("keydown", (e) => {
+    if (e.code in keymap) e.preventDefault();
+    if (running && e.code === "KeyR") nesReset();
+    if (running && e.code in regionKeys) {
+      const [code, label] = regionKeys[e.code];
+      nesSetRegion(code);
+      selected = label;
+      syncRegion(selected);
+    }
+    held.add(e.code);
+  });
+  addEventListener("keyup", (e) => held.delete(e.code));
+
+  // --- boot the WASM module ------------------------------------------
+  const go = new Go();
+  WebAssembly.instantiateStreaming(fetch("nes.wasm"), go.importObject)
+    .then((res) => go.run(res.instance))
+    .catch((err) => { statusEl.textContent = "wasm error: " + err; });
+})();
+</script>
+</body>
+</html>

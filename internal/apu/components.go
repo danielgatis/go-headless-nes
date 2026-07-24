@@ -181,12 +181,19 @@ const (
 	frameHalf
 )
 
-// NTSC frame-counter step cycles and types.
-// Index [stepMode][step]; stepMode 0 = 4-step, 1 = 5-step.
-var frameStepCycles = [2][6]int32{
-	{7457, 14913, 22371, 29828, 29829, 29830},
-	{7457, 14913, 22371, 29829, 37281, 37282},
-}
+// Frame-counter step cycles, one table per region family.
+// Index [stepMode][step]; stepMode 0 = 4-step, 1 = 5-step. Dendy uses the
+// NTSC table (its APU keeps NTSC timings).
+var (
+	frameStepCyclesNTSC = [2][6]int32{
+		{7457, 14913, 22371, 29828, 29829, 29830},
+		{7457, 14913, 22371, 29829, 37281, 37282},
+	}
+	frameStepCyclesPAL = [2][6]int32{
+		{8313, 16627, 24939, 33252, 33253, 33254},
+		{8313, 16627, 24939, 33253, 41565, 41566},
+	}
+)
 
 var frameStepType = [6]frameType{
 	frameQuarter, frameHalf, frameQuarter, frameNone, frameHalf, frameNone,
@@ -207,6 +214,11 @@ type frameCounter struct {
 
 	irqFlag           bool
 	irqFlagClearClock uint64 // master clock at which a polled IRQ flag self-clears
+
+	// stepCycles points at the region's step table. It is wiring, not
+	// state: the APU re-seats it after a snapshot restore, so it is not
+	// serialized.
+	stepCycles *[2][6]int32
 }
 
 // getIrqFlag reports the frame IRQ line. The 4-step IRQ flag is held only
@@ -259,7 +271,7 @@ func (f *frameCounter) reset(softReset bool) {
 func (f *frameCounter) run(cyclesToRun *int32, tick func(frameType), setIRQ func(bool)) uint32 {
 	var cyclesRan uint32
 
-	if f.previousCycle+*cyclesToRun >= frameStepCycles[f.stepMode][f.currentStep] {
+	if f.previousCycle+*cyclesToRun >= f.stepCycles[f.stepMode][f.currentStep] {
 		if f.stepMode == 0 && f.currentStep >= 3 {
 			// Set the IRQ status flag on the last 3 cycles in 4-step mode.
 			// Resetting the clear clock here is essential: the flag re-asserts
@@ -280,10 +292,10 @@ func (f *frameCounter) run(cyclesToRun *int32, tick func(frameType), setIRQ func
 			f.blockTick = 2
 		}
 
-		if frameStepCycles[f.stepMode][f.currentStep] < f.previousCycle {
+		if f.stepCycles[f.stepMode][f.currentStep] < f.previousCycle {
 			cyclesRan = 0
 		} else {
-			cyclesRan = uint32(frameStepCycles[f.stepMode][f.currentStep] - f.previousCycle)
+			cyclesRan = uint32(f.stepCycles[f.stepMode][f.currentStep] - f.previousCycle)
 		}
 		*cyclesToRun -= int32(cyclesRan)
 
@@ -330,7 +342,7 @@ func (f *frameCounter) run(cyclesToRun *int32, tick func(frameType), setIRQ func
 // than being deferred.
 func (f *frameCounter) needToRun(cyclesToRun int32) bool {
 	return f.newValue >= 0 || f.blockTick > 0 ||
-		f.previousCycle+cyclesToRun >= frameStepCycles[f.stepMode][f.currentStep]-1
+		f.previousCycle+cyclesToRun >= f.stepCycles[f.stepMode][f.currentStep]-1
 }
 
 // write handles a $4017 write, with the

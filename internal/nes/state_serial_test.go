@@ -37,10 +37,13 @@ func TestSnapshotBinaryRoundTrip(t *testing.T) {
 		t.Fatalf("unmarshal: %v", err)
 	}
 
-	// The DMC DMA hooks are not serialized (re-installed on Restore); zero
-	// them in the reference so the comparison ignores live wiring.
+	// The DMC DMA hooks and the channels' region-table pointers are not
+	// serialized (re-installed on Restore); zero them on both sides so the
+	// comparison ignores live wiring.
 	want.APU.DMC.ClearDMAHooks()
 	got.APU.DMC.ClearDMAHooks()
+	want.APU.ClearRegionTables()
+	got.APU.ClearRegionTables()
 
 	if !reflect.DeepEqual(want, got) {
 		t.Fatalf("snapshot round-trip mismatch (a serialized field was dropped?)\nlen=%d", len(b))

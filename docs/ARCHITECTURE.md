@@ -23,13 +23,21 @@ WebAssembly build without touching the core or the codec.
 
 ## Timing
 
-Everything advances from inside the CPU's bus cycles on one shared
-21.477272 MHz master clock. Each read or write runs the PPU to the exact
-sub-cycle position of the access (reads land at +5 master ticks, writes at
-+7), then clocks the board and the APU. The PPU renders per dot, background
-fetches take their real two-cycle ALE/data shape on a modeled address bus,
-and DMA is cycle-exact, including OAM and DMC and the collisions and aborts
-between them.
+Everything advances from inside the CPU's bus cycles on one shared master
+clock (21.477272 MHz on NTSC, 26.601712 MHz on PAL and Dendy). Each read
+or write runs the PPU to the exact sub-cycle position of the access (a
+read lands at +5 master ticks and a write at +7 on NTSC), then clocks the
+board and the APU. The PPU renders per dot, background fetches take their
+real two-cycle ALE/data shape on a modeled address bus, and DMA is
+cycle-exact, including OAM and DMC and the collisions and aborts between
+them.
+
+The TV system is one small set of parameters resolved once when the
+console powers on (or when the region is overridden): the CPU and PPU
+master-clock dividers, the number of scanlines, the vblank/NMI line, the
+odd-frame dot skip, and the APU's rate tables. Each unit copies the
+scalars it needs into fields, so no per-cycle code branches on the region;
+NTSC stays byte-for-byte what it was.
 
 None of that is a claim on faith. AccuracyCoin passes 141/141, nestest
 matches the canonical log line by line, and blargg's CPU, PPU, APU, OAM and

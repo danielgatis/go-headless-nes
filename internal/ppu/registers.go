@@ -124,7 +124,7 @@ func (p *PPU) PeekRegister(addr uint16) byte {
 	switch addr & 0x07 {
 	case 2:
 		returnValue = statusByte(p.Status)
-		if p.Scanline == nmiScanline && p.Cycle < 3 {
+		if p.Scanline == p.nmiScanline && p.Cycle < 3 {
 			returnValue &= 0x7F
 		}
 		openBusMask = 0x1F
@@ -172,7 +172,7 @@ func statusByte(s StatusFlags) byte {
 func (p *PPU) updateStatusFlag() {
 	p.Status.VerticalBlank = false
 	p.clearNmiFlag()
-	if p.Scanline == nmiScanline && p.Cycle == 0 {
+	if p.Scanline == p.nmiScanline && p.Cycle == 0 {
 		// Reading one PPU clock before the flag rises reads it clear and
 		// prevents it from setting (or an NMI) that frame.
 		p.PreventVblFlag = true

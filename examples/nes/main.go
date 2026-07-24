@@ -6,12 +6,15 @@
 //	go run . path/to/game.nes
 //
 // Controls: arrows = d-pad, Z = B, X = A, Enter = Start, right Shift =
-// Select, R = reset, F5 = save state, F9 = load state.
+// Select, R = reset, F5 = save state, F9 = load state, 1/2/3 = force
+// NTSC/PAL/Dendy region, 0 = auto (re-detect from the header). A PAL game
+// mis-flagged as NTSC runs ~20% fast until you press 2.
 package main
 
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -35,12 +38,23 @@ var keymap = map[ebiten.Key]byte{
 	ebiten.KeyShiftRight: nes.ButtonSelect,
 }
 
+// regionKeys maps a number key to the region it selects. 0 is Auto,
+// which re-detects from the cartridge header.
+var regionKeys = map[ebiten.Key]nes.Region{
+	ebiten.Key0: nes.RegionAuto,
+	ebiten.Key1: nes.RegionNTSC,
+	ebiten.Key2: nes.RegionPAL,
+	ebiten.Key3: nes.RegionDendy,
+}
+
 type game struct {
 	console   *nes.Console
 	stream    *nes.AudioStream
 	frame     *ebiten.Image
 	pixels    []byte
 	saveState []byte
+	title     string
+	selected  nes.Region // what the user picked (RegionAuto until overridden)
 }
 
 func (g *game) Update() error {
@@ -53,6 +67,13 @@ func (g *game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyF9) && g.saveState != nil {
 		if err := g.console.LoadState(g.saveState); err != nil {
 			return err
+		}
+	}
+	for key, r := range regionKeys {
+		if inpututil.IsKeyJustPressed(key) {
+			g.selected = r
+			g.console.SetRegion(r)
+			g.syncRegion()
 		}
 	}
 
@@ -72,6 +93,20 @@ func (g *game) Update() error {
 	return nil
 }
 
+// syncRegion drives Ebitengine's tick rate at the console's frame rate
+// (60 on NTSC, 50 on PAL/Dendy) so one Update runs one emulated frame in
+// real time. Without this the fixed 60 TPS would play PAL content ~20%
+// fast. The title shows the user's pick and, when it is auto, what the
+// cartridge resolved to.
+func (g *game) syncRegion() {
+	ebiten.SetTPS(int(math.Round(g.console.FrameRate())))
+	tag := g.selected.String()
+	if g.selected == nes.RegionAuto {
+		tag = "auto: " + g.console.Region().String()
+	}
+	ebiten.SetWindowTitle(g.title + " [" + tag + "]")
+}
+
 func (g *game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.frame, nil)
 }
@@ -86,7 +121,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	rom, err := os.ReadFile(os.Args[1])
+	rom, err := os.ReadFile(os.Args[1]) //nolint:gosec // G304: reading the ROM path the user passed is this program's job
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,6 +134,7 @@ func main() {
 		console: console,
 		stream:  nes.NewAudioStream(0),
 		frame:   ebiten.NewImage(nes.VideoWidth, nes.VideoHeight),
+		title:   filepath.Base(os.Args[1]) + " - go-headless-nes player",
 	}
 
 	player, err := audio.NewContext(nes.SampleRate).NewPlayer(g.stream)
@@ -109,7 +145,7 @@ func main() {
 	player.Play()
 
 	ebiten.SetWindowSize(nes.VideoWidth*scale, nes.VideoHeight*scale)
-	ebiten.SetWindowTitle(filepath.Base(os.Args[1]) + " - go-headless-nes player")
+	g.syncRegion() // seed tick rate and title from the auto-detected region
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}

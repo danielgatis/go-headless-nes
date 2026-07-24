@@ -65,8 +65,11 @@ jobs:
           sudo apt-get install -y libgl1-mesa-dev libxcursor-dev libxi-dev \
             libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
 
-      # examples/nes is its own module (so the core keeps zero deps),
+      # Each example is its own module (so the core keeps zero deps),
       # which also means the root go vet/test above never sees it.
       # -o /dev/null keeps the binary out of the working tree.
-      - name: build example
+      - name: build desktop example
         run: cd examples/nes && go vet ./... && go build -o /dev/null .
+
+      - name: build wasm example
+        run: cd examples/wasm && GOOS=js GOARCH=wasm go vet ./... && GOOS=js GOARCH=wasm go build -o /dev/null .

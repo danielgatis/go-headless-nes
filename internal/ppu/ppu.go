@@ -9,7 +9,10 @@
 // dot it changes.
 package ppu
 
-import "github.com/danielgatis/go-headless-nes/internal/cartridge"
+import (
+	"github.com/danielgatis/go-headless-nes/internal/cartridge"
+	"github.com/danielgatis/go-headless-nes/internal/region"
+)
 
 // Board is the PPU's view of the cartridge: pattern tables, nametable
 // mirroring, and the A12 watch line MMC3-style boards clock IRQs from.
@@ -51,13 +54,19 @@ type vramSniffer interface {
 // (the MMC3 edge filter, ~3 CPU cycles).
 const a12FilterDots = 10
 
-// Frame geometry (NTSC).
+// Frame dimensions are the same on every TV system; only the number of
+// vblank lines below the picture changes.
 const (
 	Width  = 256
 	Height = 240
+)
 
-	nmiScanline = 241 // vblank flag rises at (241, 1)
-	vblankEnd   = 260 // last vblank scanline; pre-render is -1
+// NTSC frame-geometry defaults. Configure overwrites the PPU's fields per
+// region: PAL/Dendy run 312 scanlines (vblankEnd 310) with no dot skip,
+// and Dendy delays the vblank flag to scanline 291.
+const (
+	defaultNMIScanline = 241 // vblank flag rises at (241, 1)
+	defaultVBlankEnd   = 260 // last vblank scanline; pre-render is -1
 )
 
 // TileInfo is one background tile's fetched data.
@@ -175,9 +184,9 @@ type State struct {
 	MasterClock uint64
 }
 
-// masterClockDivider is how many master-clock ticks make one PPU dot
-// (NTSC: 4).
-const masterClockDivider = 4
+// defaultMasterClockDivider is how many master-clock ticks make one PPU
+// dot (NTSC: 4; PAL/Dendy: 5). Configure overwrites the field.
+const defaultMasterClockDivider = 4
 
 // ControlFlags mirrors the decoded $2000 (ControlFlags).
 type ControlFlags struct {
@@ -212,6 +221,14 @@ type PPU struct {
 	State
 	board Board
 
+	// Per-region frame geometry (see the default constants). Set by
+	// Configure; not part of State, since the region is fixed for a machine
+	// and never enters a snapshot.
+	masterClockDivider uint64
+	nmiScanline        int16
+	vblankEnd          int16
+	dotSkip            bool
+
 	// ntPager/ntSource cache the board's optional nametable capabilities
 	// (derived from board at construction, not snapshotted).
 	ntPager ntPager
@@ -235,6 +252,10 @@ type PPU struct {
 // New returns a PPU in power-up state attached to a cartridge board.
 func New(board Board) *PPU {
 	p := &PPU{board: board}
+	p.masterClockDivider = defaultMasterClockDivider
+	p.nmiScanline = defaultNMIScanline
+	p.vblankEnd = defaultVBlankEnd
+	p.dotSkip = true
 	p.ntPager, _ = board.(ntPager)
 	p.ntSrc, _ = board.(ntSource)
 	p.vramSn, _ = board.(vramSniffer)
@@ -324,6 +345,15 @@ func (p *PPU) Reset(softReset bool) {
 	p.updateMinimumDrawCycles()
 }
 
+// Configure applies a region's frame geometry. Call it before the reset
+// cycles run.
+func (p *PPU) Configure(pr region.Params) {
+	p.masterClockDivider = pr.PPUDivider
+	p.nmiScanline = int16(pr.NMIScanline)
+	p.vblankEnd = int16(pr.VBlankEnd)
+	p.dotSkip = pr.DotSkip
+}
+
 // SetNMICallback installs the CPU's /NMI-line sink.
 func (p *PPU) SetNMICallback(f func(bool)) {
 	p.onNMI = f
@@ -382,7 +412,7 @@ func (p *PPU) Tick() {
 		p.A12LowDots++
 	}
 	p.exec()
-	p.MasterClock += masterClockDivider
+	p.MasterClock += p.masterClockDivider
 }
 
 // Run advances the PPU until its master clock reaches runTo, executing at
@@ -393,7 +423,7 @@ func (p *PPU) Tick() {
 func (p *PPU) Run(runTo uint64) {
 	for {
 		p.Tick()
-		if p.MasterClock+masterClockDivider > runTo {
+		if p.MasterClock+p.masterClockDivider > runTo {
 			break
 		}
 	}
@@ -405,7 +435,7 @@ func (p *PPU) exec() {
 		p.Cycle++
 		if p.Scanline < 240 {
 			p.processScanline()
-		} else if p.Cycle == 1 && p.Scanline == nmiScanline {
+		} else if p.Cycle == 1 && p.Scanline == p.nmiScanline {
 			if !p.PreventVblFlag {
 				p.Status.VerticalBlank = true
 				p.beginVBlank()
@@ -426,7 +456,7 @@ func (p *PPU) exec() {
 func (p *PPU) processScanlineFirstCycle() {
 	p.Cycle = 0
 	p.Scanline++
-	if p.Scanline > vblankEnd {
+	if p.Scanline > p.vblankEnd {
 		p.Scanline = -1
 		// Force pre-render sprite fetches to load the dummy $FF tiles.
 		p.SpriteCount = 0

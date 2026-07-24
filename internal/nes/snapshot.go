@@ -42,9 +42,11 @@ func (c *NES) Restore(s *Snapshot) {
 	c.PPU.State = s.PPU
 	c.PPU.SyncRestored()
 	c.APU.State = s.APU
-	// The DMC's DMA hooks travel inside the APU state; re-install the
-	// console's own so a snapshot can never carry stale wiring.
+	// The DMC's DMA hooks and the channels' region-table pointers travel
+	// inside the APU state; re-install the console's own so a snapshot can
+	// never carry stale wiring or a nil table pointer.
 	c.APU.SetDMAHooks(c.dmcRequest, c.dmcStop)
+	c.APU.ReinstallRegionTables()
 	c.mem.SetState(s.Bus)
 	c.Mapper.Restore(&s.Mapper)
 	c.Controllers = s.Pads
