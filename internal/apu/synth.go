@@ -18,8 +18,7 @@ const (
 	// synthBufLen must exceed blipTaps; power of two for cheap wrap.
 	synthBufLen = 64
 
-	// integratorLeak bounds float rounding drift. It must be gentle —
-	// a ~4.5 s time constant — because it sags the waveform baseline;
+	// integratorLeak bounds float rounding drift. It must be gentle (// a ~4.5 s time constant) because it sags the waveform baseline;
 	// the delivery layer owns actual DC blocking.
 	integratorLeak = 0.999995
 )
@@ -27,9 +26,8 @@ const (
 // blipKernel[p][t] is the windowed-sinc impulse for a step landing at
 // sub-sample phase p/blipPhases. Integrating it yields a band-limited
 // step of exactly the delta's height (rows are normalized). Row
-// blipPhases (a full sample of phase) is row 0 delayed one sample —
-// the window is zero at |x| = blipHalfWidth, so the shifted row still
-// fits in blipTaps taps — giving phase interpolation an upper
+// blipPhases (a full sample of phase) is row 0 delayed one sample, // the window is zero at |x| = blipHalfWidth, so the shifted row still
+// fits in blipTaps taps, giving phase interpolation an upper
 // endpoint. Built once; immutable afterwards.
 var blipKernel = buildBlipKernel()
 
@@ -95,7 +93,7 @@ func (a *APU) synthTick() {
 // interpolated; the rows are individually normalized, so the blend
 // still integrates to exactly the delta's height. The kernel starts
 // at the sample being assembled, so all audio is uniformly delayed by
-// blipHalfWidth samples (0.2 ms) — pure latency, no distortion.
+// blipHalfWidth samples (0.2 ms), pure latency, no distortion.
 func (a *APU) addDelta(d float32) {
 	pos := a.SampleAcc * blipPhases
 	phase := pos / a.cpuHz

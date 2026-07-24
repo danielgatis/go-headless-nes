@@ -11,7 +11,7 @@ const (
 )
 
 // Namco163 (mappers 19 and 210) banks PRG in 8 KiB and CHR in 1 KiB
-// with twelve slots — the last four drive the nametables, which any
+// with twelve slots, the last four drive the nametables, which any
 // slot can also source from console VRAM (register values $E0-$FF).
 // It has a 15-bit CPU-cycle IRQ up-counter, per-2-KiB save RAM write
 // protection and 128 bytes of internal sound RAM behind an auto-

@@ -263,7 +263,7 @@ func (c *NES) SetRegion(r region.Region) {
 
 // clockBefore opens a CPU cycle: run the PPU to the master-clock position of
 // the bus access, then clock the rest of the machine for the cycle in
-// hardware order — board, audio unit, then any pending controller strobe.
+// hardware order, board, audio unit, then any pending controller strobe.
 func (c *NES) clockBefore() {
 	c.PPU.Run(c.CPU.PPURunTarget())
 	c.Mapper.Tick()
@@ -315,7 +315,7 @@ func (c *NES) RunFrame() {
 }
 
 // Reset presses the console's reset button. Every unit resets in hardware
-// order — picture, audio, then the CPU, whose eight clocked reset cycles run
+// order, picture, audio, then the CPU, whose eight clocked reset cycles run
 // last so they advance the freshly restarted master clocks together. RAM,
 // VRAM, OAM and the vblank flag keep their contents, as on the real
 // front-panel button.
@@ -332,7 +332,7 @@ func (c *NES) Reset() {
 // Peek reads a byte without side effects (debuggers, trace, tests).
 // The APU/IO block ($4000-$401F, minus the joypad ports) reads back as
 // $FF, matching the debugger convention of the emulator that produced
-// the canonical nestest.log — the same convention the previous bus kept.
+// the canonical nestest.log, the same convention the previous bus kept.
 func (c *NES) Peek(addr uint16) byte {
 	if addr >= 0x4000 && addr < 0x4020 && addr != 0x4016 && addr != 0x4017 {
 		return 0xFF

@@ -1,8 +1,8 @@
 // This example runs the go-headless-nes core in the browser, compiled to
 // WebAssembly. The Go side is still just a consumer of the core: it holds
 // a Console, steps a frame, and converts video and audio to formats the
-// page can hand to a canvas and to Web Audio. Everything policy —
-// windowing, the render loop, key mapping, audio scheduling — lives in
+// page can hand to a canvas and to Web Audio. Everything that is policy
+// (windowing, the render loop, key mapping, audio scheduling) lives in
 // index.html and is written in JavaScript.
 //
 // Build it with build.sh, then serve the directory over HTTP.

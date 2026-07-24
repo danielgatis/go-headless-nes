@@ -2,7 +2,7 @@ package mapper
 
 import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
-// MMC5 (mapper 5) — Nintendo's most capable board: four PRG modes mixing
+// MMC5 (mapper 5), Nintendo's most capable board: four PRG modes mixing
 // ROM and RAM, four CHR modes with separate sprite/background bank sets
 // for 8x16 sprites, 1 KiB of ExRAM usable as a nametable, extended
 // attributes or CPU scratch, fill-mode nametables, a scanline IRQ driven
@@ -189,7 +189,7 @@ func (m *MMC5) ReadPRG(addr uint16) byte {
 }
 
 // dacWrite feeds the PCM DAC: writing (or read-mode feeding) zero does
-// not change the level — it raises the PCM IRQ instead.
+// not change the level, it raises the PCM IRQ instead.
 func (m *MMC5) dacWrite(v byte) {
 	if v == 0 {
 		m.pcmIrqPending = true

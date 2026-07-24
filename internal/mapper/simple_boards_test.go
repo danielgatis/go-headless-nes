@@ -15,7 +15,7 @@ func TestUxROMBanking(t *testing.T) {
 		t.Errorf("$C000 bank = %d, want 7 (hardwired last)", got)
 	}
 	// The board has bus conflicts, so land the write on a ROM byte
-	// that agrees with it — exactly what real games do.
+	// that agrees with it, exactly what real games do.
 	c.PRG[0x0200] = 0xFF
 	m.WritePRG(0x8200, 3)
 	if got := m.ReadPRG(0x8000); got != 3 {

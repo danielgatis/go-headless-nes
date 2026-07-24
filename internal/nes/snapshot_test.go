@@ -8,7 +8,7 @@ import (
 )
 
 // TestSnapshotRestoresExactly is the completeness proof for Snapshot:
-// run, save, run on, restore, run the same stretch again — every
+// run, save, run on, restore, run the same stretch again, every
 // observable output must repeat exactly. Any emulated state missing
 // from the snapshot shows up here as divergence.
 func TestSnapshotRestoresExactly(t *testing.T) {

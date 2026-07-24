@@ -36,7 +36,7 @@ class NESAudioProcessor extends AudioWorkletProcessor {
           this.head = (this.head + 1) % this.cap;
           this.size++;
         } else {
-          // Overflow: drop the oldest to bound latency (rare — only if the
+          // Overflow: drop the oldest to bound latency (rare, only if the
           // main thread ran far ahead of playback).
           this.ring[this.head] = chunk[i];
           this.head = (this.head + 1) % this.cap;

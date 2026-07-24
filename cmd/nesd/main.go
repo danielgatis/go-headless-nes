@@ -2,11 +2,11 @@
 // the binary control protocol (the root nes package) over stdin/stdout: a
 // consumer sends command frames (load ROM, run frame, input, debug, patch)
 // and receives event frames (video, audio, state, ...). It has no window,
-// no audio device, no scripting — those are the consumer's to build on top
+// no audio device, no scripting, those are the consumer's to build on top
 // of the core's primitives.
 //
 // Stream discipline: stdout carries ONLY protocol frames. Every diagnostic
-// — the --trace log, fatal errors, usage/flag errors — goes to stderr. A
+// (the --trace log, fatal errors, usage/flag errors) goes to stderr. A
 // single stray byte on stdout would desync the framing and break the
 // client, so nothing here (and nothing in the nes package) may print to it.
 //
@@ -63,7 +63,7 @@ func main() {
 }
 
 // serveTCP accepts protocol connections on addr forever. Every connection
-// is served by its own Server — its own console — so N clients are N
+// is served by its own Server (its own console) so N clients are N
 // independent emulator instances. The bound address is announced on stderr
 // (stdout stays reserved for protocol frames), so a parent process using
 // port 0 can scrape the port the OS picked.

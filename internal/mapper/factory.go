@@ -16,7 +16,7 @@ import (
 // port, though most boards only decode $6000 and up); CHR addresses
 // are PPU pattern-table addresses ($0000-$1FFF). Since every CPU and
 // PPU access flows through these methods, boards observe the buses
-// exactly as hardware does — bank registers, CHR latches (MMC2) and
+// exactly as hardware does, bank registers, CHR latches (MMC2) and
 // address-line IRQs all hang off them.
 type Mapper interface {
 	ReadPRG(addr uint16) byte

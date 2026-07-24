@@ -13,7 +13,7 @@ import (
 
 // smokeFrames is how long each ROM is exercised. 120 frames (~2 s) is
 // enough for boot, mapper setup, and the first stretch of the main loop
-// to run — where a broken mapper or PPU path tends to crash.
+// to run, where a broken mapper or PPU path tends to crash.
 const smokeFrames = 120
 
 // smokeSkip lists ROMs the smoke suite cannot run: mapper 28 (Action 53

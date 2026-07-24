@@ -121,7 +121,7 @@ func (m *Sunsoft89) Restore(s *State) {
 }
 
 // Sunsoft93 (mapper 93, Sunsoft-2 on Sunsoft-3R PCB): one 16 KiB PRG
-// bank and a CHR enable bit — CHR reads float when disabled.
+// bank and a CHR enable bit, CHR reads float when disabled.
 type Sunsoft93 struct {
 	base
 

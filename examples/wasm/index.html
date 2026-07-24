@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>go-headless-nes — WebAssembly</title>
+<title>go-headless-nes · WebAssembly</title>
 <style>
   :root { color-scheme: dark; }
   body {
@@ -108,15 +108,15 @@
     return mask;
   }
 
-  // requestAnimationFrame fires at the display's refresh rate — 60, 120,
-  // 144Hz — which is NOT the NES's frame rate (60.0988 on NTSC, 50.0070 on
+  // requestAnimationFrame fires at the display's refresh rate (60, 120,
+  // 144Hz), which is NOT the NES's frame rate (60.0988 on NTSC, 50.0070 on
   // PAL/Dendy). So rAF only decides *when* to run; a wall-clock accumulator
   // decides *how many* frames to run, so the game advances at true NES
   // speed on any monitor. frameMs comes from the core's region, so PAL
   // content runs at 50 fps instead of NTSC's 60 (~20% too fast). (jsnes-web
   // does the same thing in its FrameTimer; we keep the audio on an
   // AudioWorklet ring instead of the deprecated ScriptProcessorNode, which
-  // lets that ring — not this loop — absorb jitter without crackle.)
+  // lets that ring (not this loop) absorb jitter without crackle.)
   let frameMs = 1000 / 60.0988;
   let lastTick = 0;
   let acc = 0; // ms of emulated time owed
@@ -186,7 +186,7 @@
   // --- wiring, once the core is up -----------------------------------
   window.nesReady = () => {
     ready = true;
-    statusEl.textContent = "core ready — load a .nes ROM";
+    statusEl.textContent = "core ready: load a .nes ROM";
     keymap["ArrowUp"]    = nesButtons.Up;
     keymap["ArrowDown"]  = nesButtons.Down;
     keymap["ArrowLeft"]  = nesButtons.Left;

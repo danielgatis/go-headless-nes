@@ -16,7 +16,7 @@ import (
 // all memory access goes through side-effect-free peeks.
 //
 // This is also the reserved extension point for scripting: a future
-// engine (e.g. Starlark) drives exactly this API — peek memory, read
+// engine (e.g. Starlark) drives exactly this API, peek memory, read
 // CPU state, step instructions or frames, and inject controller input
 // through Console().Controllers.
 type Debugger struct {
@@ -103,7 +103,7 @@ func (d *Debugger) SyncWatches() {
 // StepInstruction executes one instruction (tracing it if enabled) and
 // reports any watchpoint change it caused. A stalled CPU (post-DMA)
 // consumes its stall cycles without executing, so those steps are not
-// traced — the instruction at PC has not run yet.
+// traced, the instruction at PC has not run yet.
 func (d *Debugger) StepInstruction() Stop {
 	if d.TraceTo != nil && d.console.CPU.Stall == 0 {
 		_, _ = fmt.Fprintln(d.TraceTo, d.Trace())

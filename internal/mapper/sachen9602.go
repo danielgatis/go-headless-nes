@@ -2,7 +2,7 @@ package mapper
 
 import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
-// Sachen9602 (mapper 513): Sachen's 3D Block variant board — an MMC3
+// Sachen9602 (mapper 513): Sachen's 3D Block variant board, an MMC3
 // whose CHR is 32 KiB of battery RAM and whose PRG space extends past
 // the MMC3's 512 KiB with an outer-bank register: bits 6-7 of a bank
 // data write to an even register supply PRG A19-A20. The two fixed PRG

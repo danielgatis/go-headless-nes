@@ -4,7 +4,7 @@ import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
 // DxROM (mapper 206, Namco 118) is the MMC3's ancestor: the same
 // $8000/$8001 index/data banking scheme but with no IRQ counter, no
-// mirroring control, no PRG swap mode and no CHR inversion — those
+// mirroring control, no PRG swap mode and no CHR inversion, those
 // select bits are simply not connected.
 type DxROM struct {
 	base

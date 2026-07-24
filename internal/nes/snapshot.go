@@ -11,7 +11,7 @@ import (
 
 // Snapshot is the console's complete emulated state as one plain value:
 // no pointers, no slices. Save and Restore are struct assignments, so
-// they never allocate, serialize or reflect — which is what makes rewind
+// they never allocate, serialize or reflect, which is what makes rewind
 // cheap enough to run every frame. ROM contents are immutable and stay
 // in the Cartridge, outside snapshots.
 type Snapshot struct {

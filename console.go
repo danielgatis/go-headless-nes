@@ -1,8 +1,8 @@
 // Package nes is the public face of the emulator core. It offers the same
 // primitives two ways:
 //
-//   - In-process: NewConsole boots a whole console — execution, video and
-//     audio, memory, save states, a debugger and live patching — behind a
+//   - In-process: NewConsole boots a whole console (execution, video and
+//     audio, memory, save states, a debugger and live patching) behind a
 //     direct Go API. Each Console is independent, so N emulator instances
 //     are just N values. A Console is not safe for concurrent use; drive
 //     each one from a single goroutine.
@@ -12,8 +12,8 @@
 //     binary, JS callbacks for a future WASM target). Server is a thin
 //     adapter that maps command frames onto a Console.
 //
-// Presentation and orchestration policy — UI, rewind, save-slots,
-// scripting — belongs to the consumer, which builds it from these
+// Presentation and orchestration policy (UI, rewind, save-slots,
+// scripting) belongs to the consumer, which builds it from these
 // primitives. Palette, VideoRGBA and AudioStream are the deliberate
 // exceptions: they perform the two conversions every frontend repeats
 // (color indices to RGBA, float32 samples to PCM) without deciding any
@@ -158,8 +158,8 @@ func (c *Console) Region() Region { return Region(c.core.Region()) }
 func (c *Console) FrameRate() float64 { return c.core.FrameRate() }
 
 // Video returns the current framebuffer: VideoWidth*VideoHeight NES color
-// indices (0-63). The slice aliases the live PPU buffer — read it before
-// the next RunFrame, or copy it out.
+// indices (0-63). The slice aliases the live PPU buffer, so read it
+// before the next RunFrame, or copy it out.
 func (c *Console) Video() []byte { return c.core.Framebuffer()[:] }
 
 // Audio drains and returns the samples generated since the last call.

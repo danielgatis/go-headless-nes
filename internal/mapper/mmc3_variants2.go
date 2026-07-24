@@ -4,8 +4,8 @@ import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
 // This file continues the MMC3-derived boards begun in mmc3_variants.go
 // and mmc3_multi.go. Each board embeds the stock MMC3 (mapper 4) and
-// overrides only the wiring that differs — an outer bank register, a CHR
-// RAM window, a scrambled address decode — leaving the shared IRQ counter
+// overrides only the wiring that differs, an outer bank register, a CHR
+// RAM window, a scrambled address decode, leaving the shared IRQ counter
 // and register file intact. Extra state packs into s.Regs from index 17
 // up, above the 17 bytes MMC3 itself uses.
 

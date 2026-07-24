@@ -192,7 +192,7 @@ func (m *Memory) Write(addr uint16, value byte) {
 // WriteRMW performs the second (modified) write of a read-modify-write pair.
 // It behaves like write except that when the target handler itself filters
 // consecutive writes (the cartridge board's serial port), the handler decides
-// whether to drop the write — matching boards that ignore the second of two
+// whether to drop the write, matching boards that ignore the second of two
 // back-to-back writes. RAM and I/O just take the write.
 func (m *Memory) WriteRMW(addr uint16, value byte) {
 	if h, ok := m.writeHandlers[addr].(RMWWriter); ok {

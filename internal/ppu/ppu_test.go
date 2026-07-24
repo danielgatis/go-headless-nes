@@ -24,7 +24,7 @@ func (b *stubBoard) Mirroring() cartridge.Mirroring { return b.mirroring }
 func (b *stubBoard) Scanline()                      {}
 
 // TestPPURunsFrame drives the PPU by its master clock through a full frame
-// and checks the frame-complete flag and scanline wrap — a smoke test that
+// and checks the frame-complete flag and scanline wrap, a smoke test that
 // the per-dot pipeline runs without panicking. Cycle-exact behavior is
 // verified against blargg's ROMs once the console is wired (integration).
 func TestPPURunsFrame(t *testing.T) {

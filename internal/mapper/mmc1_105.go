@@ -2,7 +2,7 @@ package mapper
 
 import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
-// MMC1Event (mapper 105, NES-EVENT — Nintendo World Championships): an
+// MMC1Event (mapper 105, NES-EVENT, Nintendo World Championships): an
 // MMC1 whose CHR register 0 drives an init-state machine, a 30-bit
 // CPU-cycle IRQ timer (the competition countdown, extended by the DIP
 // switches) and a two-level PRG scheme: a 32 KiB outer mode or the

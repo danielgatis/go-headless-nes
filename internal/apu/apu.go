@@ -289,7 +289,7 @@ func (a *APU) IRQ() bool {
 
 // Ranges maps the APU into the CPU address space: it takes writes to
 // $4000-$4013, $4015 and $4017, and the $4015 status read. ($4014 is OAM
-// DMA and $4016/$4017 reads are the controllers — those are other handlers.)
+// DMA and $4016/$4017 reads are the controllers, those are other handlers.)
 func (a *APU) Ranges() *bus.Ranges {
 	r := bus.NewRanges()
 	r.Add(bus.OpWrite, 0x4000, 0x4013)

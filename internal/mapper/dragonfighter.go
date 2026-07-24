@@ -2,7 +2,7 @@ package mapper
 
 import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
-// DragonFighter (mapper 292): the UNL-DRAGONFIGHTER pirate board — an
+// DragonFighter (mapper 292): the UNL-DRAGONFIGHTER pirate board, an
 // MMC3 with a protection PLD in front of it. CPU reads of $6000-$6FFF
 // make the PLD latch a value from console work RAM (zero page $6A or
 // $FF, depending on the mode written to $6000), and the latched values

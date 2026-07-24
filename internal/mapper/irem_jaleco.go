@@ -239,8 +239,8 @@ func (m *IremH3001) Restore(s *State) {
 }
 
 // IremTamS1 (mapper 97, Kaiketsu Yanchamaru): the first 16 KiB window is
-// fixed to the LAST bank and the second is switchable — the reverse of
-// UNROM — with two-bit register mirroring.
+// fixed to the LAST bank and the second is switchable, the reverse of
+// UNROM, with two-bit register mirroring.
 type IremTamS1 struct {
 	base
 
@@ -306,7 +306,7 @@ func (m *IremTamS1) Restore(s *State) {
 }
 
 // JalecoJF16 (mapper 78): one switchable 16 KiB PRG bank, one 8 KiB CHR
-// bank and one-screen mirroring — except submapper 3 (Holy Diver),
+// bank and one-screen mirroring, except submapper 3 (Holy Diver),
 // whose bit selects H/V instead. Has bus conflicts.
 type JalecoJF16 struct {
 	base

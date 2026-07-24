@@ -4,8 +4,7 @@ import "fmt"
 
 // Tracing renders opcodes as human-readable lines on the trace writer
 // (stderr under --trace), since the binary wire form is not eyeball-
-// friendly. The seam is the dispatch, where opcodes are already decoded —
-// independent of the transport, so it works identically for a WASM binding.
+// friendly. The seam is the dispatch, where opcodes are already decoded, // independent of the transport, so it works identically for a WASM binding.
 
 // traceIn logs an inbound command frame.
 func (s *Server) traceIn(f Frame) {

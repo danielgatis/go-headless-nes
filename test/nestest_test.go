@@ -25,7 +25,7 @@ var ppuColumn = regexp.MustCompile(`PPU:\s*(\d+),\s*(\d+)`)
 // leave the PPU 4 dots further along, at (0,25). Both machines then
 // advance exactly 3 dots per CPU cycle (nestest never enables rendering,
 // so the odd-frame dot skip is out of play), so the whole log differs by
-// a constant +4 dots — everything else on the line must match exactly.
+// a constant +4 dots, everything else on the line must match exactly.
 func nintendulatorToReferencePPU(line string) string {
 	m := ppuColumn.FindStringSubmatchIndex(line)
 	if m == nil {

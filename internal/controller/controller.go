@@ -20,8 +20,8 @@ const (
 	Right
 )
 
-// Controller is one joypad. It is a plain value — three bytes of
-// state — so snapshots copy it by assignment.
+// Controller is one joypad. It is a plain value, three bytes of
+// state, so snapshots copy it by assignment.
 type Controller struct {
 	Buttons byte // current physical button state, set by the UI driver
 	Strobe  bool
@@ -67,7 +67,7 @@ func (c *Controller) Peek() byte {
 
 // Manager maps the two joypad ports into the CPU address space:
 // $4016/$4017 reads and the $4016 strobe write. It reproduces the read-clock
-// cache — a genuinely new read (different address, or more than one cycle
+// cache, a genuinely new read (different address, or more than one cycle
 // since the last read) shifts the register; an immediate re-read of the same
 // address returns the cached value without shifting, matching hardware and
 // the DMA internal-register glitch.

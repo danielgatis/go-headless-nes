@@ -1,7 +1,7 @@
 // Package testrom builds synthetic NROM cartridges for unit tests, so a
 // test that only needs "a console that runs" does not have to load a real
-// ROM. The image mirrors nestest's board — 16 KiB PRG, 8 KiB CHR,
-// horizontal mirroring, mapper 0 — and reproduces the handful of program
+// ROM. The image mirrors nestest's board, 16 KiB PRG, 8 KiB CHR,
+// horizontal mirroring, mapper 0, and reproduces the handful of program
 // landmarks the emulator's unit tests lean on. Tests that genuinely
 // depend on a real program's behaviour (nestest's menu, blargg's beep)
 // stay in the ROM-driven integration suite under test/.

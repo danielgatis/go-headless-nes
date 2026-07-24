@@ -5,7 +5,7 @@ import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 // MMC2 (mapper 9, Punch-Out!!) and MMC4 (mapper 10) switch CHR banks
 // automatically mid-frame: each 4 KiB pattern window has two bank
 // registers, and reading specific tile addresses ($FD8/$FE8 rows)
-// flips a latch selecting between them — that is how Punch-Out! shows
+// flips a latch selecting between them, that is how Punch-Out! shows
 // giant opponents with tiny sprite budgets. They differ in PRG layout
 // and in the latch address ranges for the low window.
 type MMC2 struct {

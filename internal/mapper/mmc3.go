@@ -137,7 +137,7 @@ func (m *MMC3) WriteCHR(addr uint16, v byte) {
 }
 
 // chrPage1K resolves the raw 1 KiB CHR page for addr, keeping every
-// register bit intact — the granularity multicart outer banks and
+// register bit intact, the granularity multicart outer banks and
 // TQROM's RAM-select bit operate on.
 func (m *MMC3) chrPage1K(addr uint16) int {
 	if m.bankSelect&0x80 != 0 {
@@ -186,7 +186,7 @@ func (m *MMC3) Mirroring() cartridge.Mirroring {
 // every clock (mmc3_test's 5-MMC3). The alternate revision (6-MMC6 /
 // 6-MMC3_alt), which suppresses the IRQ on a natural reload after the
 // counter already hit zero, is a different silicon variant and is
-// mutually exclusive with 5-MMC3 — no single implementation passes both,
+// mutually exclusive with 5-MMC3, no single implementation passes both,
 // so those two sub-tests fail by design. The normal behaviour is what
 // the games this emulator targets (SMB3 and friends) depend on.
 func (m *MMC3) Scanline() {

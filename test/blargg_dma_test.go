@@ -13,7 +13,7 @@ func Test_blarggDMA(t *testing.T) {
 }
 
 // Test_dmcDMADuringRead4 (dmc_dma_during_read4 suite) does not signal
-// completion within the harness step cap on the current core — the DMC
+// completion within the harness step cap on the current core, the DMC
 // DMA / $4016-$4017 read-conflict edge cases it targets are not yet
 // modelled. Skipped with a reason rather than burning the cap each run.
 func Test_dmcDMADuringRead4(t *testing.T) {

@@ -134,7 +134,7 @@ func smokeCart(id uint16, sub byte) *cartridge.Cartridge {
 
 // TestMapperSmoke drives every supported board through its whole
 // register space, PRG/CHR access, ticks, scanlines and a snapshot
-// round-trip — a build-level guarantee that no board panics or breaks
+// round-trip, a build-level guarantee that no board panics or breaks
 // the Mapper contract.
 func TestMapperSmoke(t *testing.T) {
 	for _, tc := range supportedMapperIDs {

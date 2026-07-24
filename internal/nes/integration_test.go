@@ -48,7 +48,7 @@ func blarggMessage(c *NES) string {
 }
 
 // TestIntegrationBlarggCPU runs blargg's official instruction test through
-// the fully wired console — the first end-to-end proof that CPU + PPU + APU +
+// the fully wired console, the first end-to-end proof that CPU + PPU + APU +
 // memory + board work together on the shared master clock.
 func TestIntegrationBlarggCPU(t *testing.T) {
 	cart := loadCart(t, "../../test/roms/instr_test-v5/official_only.nes")

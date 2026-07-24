@@ -339,7 +339,7 @@ func (m *Jaleco140) Save(s *State) { m.saveRAM(s); s.Regs[0] = m.reg }
 // Restore loads the board's mapper-specific state from s.
 func (m *Jaleco140) Restore(s *State) { m.restoreRAM(s); m.reg = s.Regs[0] }
 
-// UNROM180 (mapper 180, Crazy Climber): UxROM inverted — the first
+// UNROM180 (mapper 180, Crazy Climber): UxROM inverted, the first
 // bank is fixed at $8000 and $C000 is switchable.
 type UNROM180 struct {
 	base

@@ -235,7 +235,7 @@ type PPU struct {
 	ntSrc   ntSource
 	vramSn  vramSniffer
 
-	// framebuffer holds one NES color index (0-63) per pixel — the value
+	// framebuffer holds one NES color index (0-63) per pixel, the value
 	// DrawPixel reads out of palette RAM. Derived state: rewind repaints
 	// it, so it is not snapshotted.
 	framebuffer [Width * Height]byte
@@ -263,14 +263,13 @@ func New(board Board) *PPU {
 	p.Reset(false)
 	// The PPU parks at (scanline -1, cycle 340); its first Exec (the wrap to
 	// (0,0)) is a real dot, run by the machine's reset-cycle PPU.Run calls via
-	// the shared master clock — no priming here.
+	// the shared master clock, no priming here.
 	return p
 }
 
 // Reset models power-on / the reset line.
 func (p *PPU) Reset(softReset bool) {
-	// The master-clock position restarts on every reset, unconditionally —
-	// the CPU restarts its own too, so the two clocks stay aligned through
+	// The master-clock position restarts on every reset, unconditionally, // the CPU restarts its own too, so the two clocks stay aligned through
 	// the eight clocked reset cycles.
 	p.MasterClock = 0
 

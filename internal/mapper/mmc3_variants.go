@@ -58,8 +58,7 @@ func (m *TxSROM) Restore(s *State) {
 	copy(m.ntPages[:], s.Regs[17:21])
 }
 
-// TQROM (mapper 119): an MMC3 that mixes CHR ROM and 8 KiB of CHR RAM —
-// bit 6 of a CHR bank register selects RAM for that window.
+// TQROM (mapper 119): an MMC3 that mixes CHR ROM and 8 KiB of CHR RAM, // bit 6 of a CHR bank register selects RAM for that window.
 type TQROM struct {
 	MMC3
 }

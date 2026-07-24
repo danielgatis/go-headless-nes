@@ -53,7 +53,7 @@ func (p *PPU) mapperReadVram(addr uint16) byte {
 	}
 	// The PPU bus for $2000-$3FFF addresses CIRAM: $3000-$3FFF mirrors
 	// $2000-$2FFF. Palette RAM is a separate internal latch read directly
-	// by the register/pixel paths, not over this bus — so a $2007 palette
+	// by the register/pixel paths, not over this bus, so a $2007 palette
 	// read loads its buffer with the underlying nametable byte at $2Fxx.
 	if p.ntSrc != nil {
 		if v, ok := p.ntSrc.ReadNT(0x2000 | (addr & 0x0FFF)); ok {
@@ -656,7 +656,7 @@ func (p *PPU) updateState() {
 			} else {
 				// Mid-rendering the write drives the high address pins from
 				// the new v immediately, but AD0-7 keep the value latched at
-				// the last ALE — the in-flight fetch reads a hybrid address.
+				// the last ALE, the in-flight fetch reads a hybrid address.
 				p.setBusAddress((p.VideoRAMAddr & 0x3F00) | (p.PpuBusAddress & 0x00FF))
 			}
 		} else {
@@ -722,7 +722,7 @@ func (p *PPU) updateState() {
 }
 
 // aleDot reports whether the current dot is the address (ALE) phase of a
-// background fetch — an odd dot inside the fetch regions of a visible or
+// background fetch, an odd dot inside the fetch regions of a visible or
 // pre-render scanline with rendering enabled.
 func (p *PPU) aleDot() bool {
 	return p.PrevRenderingEnabled && p.Scanline < 240 && p.Cycle&1 == 1 &&

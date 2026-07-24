@@ -3,7 +3,7 @@ package mapper
 import "github.com/danielgatis/go-headless-nes/internal/cartridge"
 
 // AxROM (mapper 7) banks 32 KiB of PRG at $8000 and selects which
-// single nametable is visible — Battletoads-style boards. CHR is 8 KiB
+// single nametable is visible, Battletoads-style boards. CHR is 8 KiB
 // of RAM. (The AMROM revision has bus conflicts; ANROM does not. We
 // model the conflict-free revision, which every mapper-7 game runs on.)
 type AxROM struct {

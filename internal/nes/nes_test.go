@@ -18,7 +18,7 @@ func newConsole(t *testing.T) *NES {
 // TestDeterminism runs two consoles from the same ROM in lockstep and
 // requires identical state: same framebuffer, same cycle counts, same
 // master clock. Any hidden or global state would show up here. It needs
-// no real program — determinism is a property of the core, so a synthetic
+// no real program, determinism is a property of the core, so a synthetic
 // ROM suffices. Behaviour that depends on the actual nestest program
 // (menu rendering, controller-driven runs) lives in the integration suite
 // under test/.

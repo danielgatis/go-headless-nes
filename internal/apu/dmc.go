@@ -89,7 +89,7 @@ func (d *DMC) Deliver(value byte) {
 
 	// When the DMA ends on the APU cycle right before the bit counter
 	// resets on a 1-byte non-looping sample, the reload of the sample
-	// triggers another DMA that is aborted one cycle later — a 1-cycle
+	// triggers another DMA that is aborted one cycle later, a 1-cycle
 	// halt on the CPU (the "implicit DMA abort").
 	if d.SampleLen == 1 && !d.Loop && d.BitsLeft == 1 && d.tmr.getTimer() < 2 {
 		d.ShiftRegister = d.ReadBuffer

@@ -6,7 +6,7 @@ import "testing"
 // implements the normal MMC3B revision, so 5-MMC3 (zero latch IRQs every
 // clock) passes. Test 6 (6-MMC6 / 6-MMC3_alt) checks the *alternate*
 // silicon revision, whose reload-to-zero IRQ suppression is mutually
-// exclusive with 5-MMC3 — no single implementation passes both. Those
+// exclusive with 5-MMC3, no single implementation passes both. Those
 // two cases live in Test_blarggMMC3Alt below, skipped by design.
 func Test_blarggMMC3Suite(t *testing.T) {
 	t.Parallel()

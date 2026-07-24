@@ -1,20 +1,24 @@
 # WebAssembly example
 
-The go-headless-nes core running in the browser. The core is compiled to
-WebAssembly and does exactly what it does everywhere else — emulate a
-frame, hand back video and audio. The page (`index.html`) supplies the
-policy: a `requestAnimationFrame` loop, a canvas, keyboard input, and an
-AudioWorklet that plays sound from a ring buffer (`nes-audio-worklet.js`).
-The worklet runs audio on its own thread and drains the ring at the
-hardware clock, so jitter in the render loop never turns into crackle. The
-loop itself paces emulation off a wall clock — one NES frame per 60.0988
-fps of elapsed time — rather than one frame per rAF tick, so the game runs
-at true speed on 60, 120, or 144Hz displays alike. (This is the same split
-jsnes-web's FrameTimer uses; the difference is the AudioWorklet ring in
-place of its deprecated ScriptProcessorNode.)
+The go-headless-nes core running in the browser, compiled to WebAssembly.
+In the browser it does what it does everywhere else: emulate a frame and
+hand back video and audio. The page (`index.html`) supplies the policy. A
+`requestAnimationFrame` loop drives it, a canvas shows the picture, the
+keyboard feeds input, and an AudioWorklet plays sound from a ring buffer
+(`nes-audio-worklet.js`). The worklet runs audio on its own thread and
+drains the ring at the hardware clock, so jitter in the render loop never
+turns into crackle.
 
-Like `examples/nes`, this is its own Go module, so nothing here touches
-the core's `go.mod`.
+`requestAnimationFrame` fires at the display's refresh rate, which is not
+the NES frame rate. So the loop keeps a wall-clock accumulator and runs as
+many frames as real time owes, at the console's own rate (about 60 fps on
+NTSC, 50 on PAL and Dendy, read from `nesFrameRate`). The game then runs
+at true speed on a 60, 120, or 144 Hz display alike, and PAL content plays
+at 50 fps rather than NTSC's 60. The render-loop split follows the same
+idea as jsnes-web's FrameTimer; the audio sits on an AudioWorklet ring
+instead of a deprecated ScriptProcessorNode.
+
+It is its own Go module, so nothing here touches the core's `go.mod`.
 
 ## Build and run
 
@@ -26,10 +30,10 @@ go run ./serve      # static server with the right .wasm MIME type
 
 Then open <http://localhost:8080>, pick a `.nes` ROM, and play.
 
-You can serve the directory with any static HTTP server instead of
-`go run ./serve` — the only requirement is that `.wasm` files are sent
-with `Content-Type: application/wasm`, which `instantiateStreaming`
-needs. Opening `index.html` from `file://` will not work.
+Any static HTTP server works in place of `go run ./serve`. The one
+requirement is that `.wasm` files are sent with
+`Content-Type: application/wasm`, which `instantiateStreaming` needs.
+Opening `index.html` from `file://` will not work.
 
 ## Controls
 
