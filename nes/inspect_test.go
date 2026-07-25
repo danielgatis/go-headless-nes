@@ -67,3 +67,53 @@ func TestSetRegisterUnknown(t *testing.T) {
 		t.Fatal("SetRegister with unknown name should error")
 	}
 }
+
+func TestVRAMNametableRoundTrip(t *testing.T) {
+	c := newConsole(t)
+	// $2000 is CIRAM (a nametable), always writable regardless of the board.
+	c.PokeVRAM(0x2000, 0xAB)
+	if got := c.PeekVRAM(0x2000); got != 0xAB {
+		t.Fatalf("nametable PeekVRAM(2000) = %02X, want AB", got)
+	}
+}
+
+func TestVRAMPaletteRoundTrip(t *testing.T) {
+	c := newConsole(t)
+	c.PokeVRAM(0x3F01, 0x21)
+	if got := c.PeekVRAM(0x3F01); got != 0x21 {
+		t.Fatalf("palette PeekVRAM(3F01) = %02X, want 21", got)
+	}
+	// The same byte is visible through the flat palette accessor.
+	if got := c.PaletteRAM()[0x01]; got != 0x21 {
+		t.Fatalf("PaletteRAM[1] = %02X, want 21", got)
+	}
+}
+
+func TestPPUStateAgreesWithState(t *testing.T) {
+	c := newConsole(t)
+	for i := 0; i < 3; i++ {
+		c.RunFrame()
+	}
+	ps := c.PPUState()
+	s := c.State()
+	if ps.Frame != s.Frame {
+		t.Errorf("PPUState.Frame = %d, State.Frame = %d", ps.Frame, s.Frame)
+	}
+	if ps.Scanline != s.Scanline || ps.Dot != s.Dot {
+		t.Errorf("PPUState position (%d,%d) != State (%d,%d)", ps.Scanline, ps.Dot, s.Scanline, s.Dot)
+	}
+}
+
+func TestCartInfo(t *testing.T) {
+	c := newConsole(t)
+	info := c.CartInfo()
+	if info.MapperID != 0 {
+		t.Errorf("MapperID = %d, want 0 (synthetic NROM)", info.MapperID)
+	}
+	if info.PRGSize == 0 {
+		t.Error("PRGSize = 0, want non-empty PRG ROM")
+	}
+	if info.Mirroring == "" {
+		t.Error("Mirroring is empty")
+	}
+}
