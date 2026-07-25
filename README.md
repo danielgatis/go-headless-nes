@@ -1,6 +1,5 @@
 # go-headless-nes
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/danielgatis/go-headless-nes?style=flat-square)](https://goreportcard.com/report/github.com/danielgatis/go-headless-nes)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/danielgatis/go-headless-nes/main/LICENSE)
 [![Go Doc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/danielgatis/go-headless-nes)
 [![Release](https://img.shields.io/github/release/danielgatis/go-headless-nes.svg?style=flat-square)](https://github.com/danielgatis/go-headless-nes/releases/latest)
