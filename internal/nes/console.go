@@ -343,6 +343,10 @@ func (c *NES) Peek(addr uint16) byte {
 // Write performs a side-effecting CPU-visible write (for tests and tooling).
 func (c *NES) Write(addr uint16, v byte) { c.mem.Write(addr, v) }
 
+// SetBusHooks installs (or with the zero value clears) the debug taps on
+// the CPU bus. See bus.Hooks.
+func (c *NES) SetBusHooks(h bus.Hooks) { c.mem.SetHooks(h) }
+
 // MasterClock is the shared master-clock position in ticks since
 // power-on (21.477272 MHz on NTSC, 26.601712 MHz on PAL and Dendy).
 func (c *NES) MasterClock() uint64 { return c.CPU.MasterClock() }

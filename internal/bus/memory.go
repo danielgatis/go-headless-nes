@@ -130,6 +130,23 @@ func (m *workRAM) ReadReg(addr uint16) byte     { return m.ram[addr&0x7FF] }
 func (m *workRAM) PeekReg(addr uint16) byte     { return m.ram[addr&0x7FF] }
 func (m *workRAM) WriteReg(addr uint16, v byte) { m.ram[addr&0x7FF] = v }
 
+// Hooks are optional debug taps on the CPU bus. Every field is nil by
+// default, so a non-debug console pays one nil check per access and
+// nothing else; the byte-for-byte behaviour is unchanged when no hook is
+// installed.
+//
+// FilterRead substitutes the value the CPU sees on a read (a Game Genie
+// swaps a byte this way). FilterWrite returns the value to actually store
+// and whether to perform the write at all (allow=false blocks it, for a
+// value lock). OnRead and OnWrite observe the final access after any
+// filter, and must not themselves touch the bus (no re-entrancy).
+type Hooks struct {
+	OnRead      func(addr uint16, value byte)
+	OnWrite     func(addr uint16, value byte)
+	FilterRead  func(addr uint16, value byte) byte
+	FilterWrite func(addr uint16, value byte) (out byte, allow bool)
+}
+
 // Memory is the CPU's address space: a 64 KiB table of read and write
 // handlers, plus the open-bus latches. Devices register their address
 // ranges; a read or write dispatches to the handler at that address and
@@ -139,7 +156,11 @@ type Memory struct {
 	work          workRAM
 	readHandlers  [cpuMemorySize]Handler
 	writeHandlers [cpuMemorySize]Handler
+	hooks         Hooks
 }
+
+// SetHooks installs (or with the zero value clears) the debug bus taps.
+func (m *Memory) SetHooks(h Hooks) { m.hooks = h }
 
 // New builds the address space with every address defaulting to open
 // bus, then maps the work RAM over $0000-$1FFF.
@@ -179,14 +200,29 @@ func (m *Memory) Read(addr uint16) byte { return m.ReadBus(addr, Both) }
 // A $4015 read forces the internal latch only.
 func (m *Memory) ReadBus(addr uint16, bt Type) byte {
 	v := m.readHandlers[addr].ReadReg(addr)
+	if m.hooks.FilterRead != nil {
+		v = m.hooks.FilterRead(addr, v)
+	}
 	m.openBus.setOpenBus(bt, v, addr == 0x4015)
+	if m.hooks.OnRead != nil {
+		m.hooks.OnRead(addr, v)
+	}
 	return v
 }
 
 // Write stores value at addr and drives both open-bus latches.
 func (m *Memory) Write(addr uint16, value byte) {
-	m.writeHandlers[addr].WriteReg(addr, value)
+	allow := true
+	if m.hooks.FilterWrite != nil {
+		value, allow = m.hooks.FilterWrite(addr, value)
+	}
+	if allow {
+		m.writeHandlers[addr].WriteReg(addr, value)
+	}
 	m.openBus.setOpenBus(Both, value, false)
+	if m.hooks.OnWrite != nil {
+		m.hooks.OnWrite(addr, value)
+	}
 }
 
 // WriteRMW performs the second (modified) write of a read-modify-write pair.
@@ -195,12 +231,21 @@ func (m *Memory) Write(addr uint16, value byte) {
 // whether to drop the write, matching boards that ignore the second of two
 // back-to-back writes. RAM and I/O just take the write.
 func (m *Memory) WriteRMW(addr uint16, value byte) {
-	if h, ok := m.writeHandlers[addr].(RMWWriter); ok {
-		h.WriteRMWSecond(addr, value)
-	} else {
-		m.writeHandlers[addr].WriteReg(addr, value)
+	allow := true
+	if m.hooks.FilterWrite != nil {
+		value, allow = m.hooks.FilterWrite(addr, value)
+	}
+	if allow {
+		if h, ok := m.writeHandlers[addr].(RMWWriter); ok {
+			h.WriteRMWSecond(addr, value)
+		} else {
+			m.writeHandlers[addr].WriteReg(addr, value)
+		}
 	}
 	m.openBus.setOpenBus(Both, value, false)
+	if m.hooks.OnWrite != nil {
+		m.hooks.OnWrite(addr, value)
+	}
 }
 
 // Peek reads without side effects, for debuggers and tracing.

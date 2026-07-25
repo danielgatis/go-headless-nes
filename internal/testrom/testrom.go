@@ -44,7 +44,7 @@ func New(tb testing.TB) *cartridge.Cartridge {
 }
 
 // Image returns the raw iNES bytes of the synthetic NROM, for callers that
-// need the on-disk form (e.g. driving the protocol server's LoadROM).
+// need the on-disk form (e.g. feeding NewConsole).
 func Image(tb testing.TB) []byte {
 	tb.Helper()
 

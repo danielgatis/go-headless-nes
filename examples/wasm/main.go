@@ -26,7 +26,7 @@ package main
 import (
 	"syscall/js"
 
-	nes "github.com/danielgatis/go-headless-nes"
+	"github.com/danielgatis/go-headless-nes/nes"
 )
 
 // console is the single emulated machine this page drives. WASM is

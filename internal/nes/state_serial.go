@@ -3,10 +3,10 @@ package nes
 import "github.com/danielgatis/go-headless-nes/internal/serial"
 
 // Append writes the whole console Snapshot to w by composing the
-// per-package State codecs in a fixed order. This is the wire form used
-// by the protocol's SaveState/LoadState; it covers every field including
-// the unexported ones a reflection encoder cannot reach. ROM contents
-// stay in the Cartridge and are never part of a snapshot.
+// per-package State codecs in a fixed order. This is the serialized form
+// used by SaveState/LoadState; it covers every field including the
+// unexported ones a reflection encoder cannot reach. ROM contents stay in
+// the Cartridge and are never part of a snapshot.
 func (s *Snapshot) Append(w *serial.Writer) {
 	s.CPU.Append(w)
 	s.PPU.Append(w)

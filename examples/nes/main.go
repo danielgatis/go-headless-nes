@@ -19,7 +19,7 @@ import (
 	"path/filepath"
 	"time"
 
-	nes "github.com/danielgatis/go-headless-nes"
+	"github.com/danielgatis/go-headless-nes/nes"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"

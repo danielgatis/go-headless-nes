@@ -11,8 +11,8 @@ package region
 // cartridge); a resolved Params is never built from Auto.
 type Region uint8
 
-// The regions. The numeric values are wire-stable: they are the payload
-// byte of the OpSetRegion protocol command.
+// The regions. The numeric values are stable: they are the argument of
+// the runtime SetRegion override.
 const (
 	Auto Region = iota
 	NTSC

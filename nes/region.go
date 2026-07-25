@@ -7,8 +7,7 @@ import "github.com/danielgatis/go-headless-nes/internal/region"
 // means "re-detect from the cartridge".
 type Region uint8
 
-// The regions. The values are wire-stable: they are the payload byte of
-// the OpSetRegion command.
+// The regions.
 const (
 	RegionAuto Region = iota
 	RegionNTSC

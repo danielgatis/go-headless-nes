@@ -1,16 +1,8 @@
-// Package nes is the public face of the emulator core. It offers the same
-// primitives two ways:
-//
-//   - In-process: NewConsole boots a whole console (execution, video and
-//     audio, memory, save states, a debugger and live patching) behind a
-//     direct Go API. Each Console is independent, so N emulator instances
-//     are just N values. A Console is not safe for concurrent use; drive
-//     each one from a single goroutine.
-//
-//   - Over the wire: Encoder, Decoder and Server speak the binary control
-//     protocol on any io stream (stdin/stdout for the cmd/nesd
-//     binary, JS callbacks for a future WASM target). Server is a thin
-//     adapter that maps command frames onto a Console.
+// Package nes is the public face of the emulator core. NewConsole boots a
+// whole console (execution, video and audio, memory, save states, a
+// debugger and live patching) behind a direct Go API. Each Console is
+// independent, so N emulator instances are just N values. A Console is not
+// safe for concurrent use; drive each one from a single goroutine.
 //
 // Presentation and orchestration policy (UI, rewind, save-slots,
 // scripting) belongs to the consumer, which builds it from these
@@ -56,8 +48,7 @@ const (
 	ButtonRight  = controller.Right
 )
 
-// StopReason says why RunFrame or Step returned early. The values are
-// wire-stable: OpStop's first payload byte is the reason.
+// StopReason says why RunFrame or Step returned early.
 type StopReason byte
 
 // The reasons execution can stop early.
@@ -104,6 +95,9 @@ type Console struct {
 	pads  [2]byte
 	snap  core.Snapshot
 	audio []float32
+
+	observer Observer
+	filter   MemFilter
 }
 
 // NewConsole boots a console from an iNES ROM image.

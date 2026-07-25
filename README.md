@@ -10,9 +10,8 @@
 </p>
 
 A headless NES emulator core in Go. Zero dependencies, deterministic,
-cycle-accurate. Use it as a Go library, or run it as a standalone process
-and drive it over a tiny binary protocol on stdin/stdout. The UI, rewind
-and tooling are yours to build on top.
+cycle-accurate. You embed it as a Go library and drive it in-process. The
+UI, rewind and tooling are yours to build on top.
 
 There is no window, no audio device, no scripting engine. Just the core
 and its primitives.
@@ -34,8 +33,6 @@ and its primitives.
 - **Regions**: NTSC, PAL and Dendy, auto-detected from the header and a
   built-in cartridge database (which corrects dumps that misreport their
   region), and overridable at runtime.
-- **Binary protocol**: drive the core from any language over
-  stdin/stdout or TCP.
 
 Window, audio output, key mapping, rewind and scripting are left out on
 purpose. They're policy, and they all fall out of the primitives above.
@@ -51,7 +48,7 @@ go get github.com/danielgatis/go-headless-nes
 As a library:
 
 ```go
-import nes "github.com/danielgatis/go-headless-nes"
+import "github.com/danielgatis/go-headless-nes/nes"
 
 console, _ := nes.NewConsole(rom)
 console.RunFrame()
@@ -59,27 +56,17 @@ video := console.Video()   // 256*240 NES color indices
 audio := console.Audio()   // float32 samples
 ```
 
-Or as a standalone core process:
+Each `Console` is one independent instance, so N emulators are just N
+values. A `Console` is not safe for concurrent use; drive each from a
+single goroutine. A full runnable client lives in
+[docs/CLIENT.md](docs/CLIENT.md).
+
+To run the tests:
 
 ```bash
-go build ./cmd/nesd   # builds the core binary (Go 1.25+)
-git submodule update --init      # fetch the test ROMs (only needed for tests)
-go test ./...                    # everything runs, no external deps
+git submodule update --init   # fetch the test ROMs
+go test ./...                 # everything runs, no external deps
 ```
-
-The binary isn't interactive. It reads command frames on stdin and writes
-event frames on stdout, so something else drives it: a UI, a test harness,
-a TAS tool, a WASM page. If you'd rather talk to it over TCP, start it
-with `--listen 127.0.0.1:4444` and each connection gets its own
-independent console.
-
-```go
-enc.Write(nes.OpLoadROM, rom)
-enc.Write(nes.OpRunFrame, nil)   // yields a Video + Audio event
-```
-
-Full runnable clients for both modes live in
-[docs/CLIENT.md](docs/CLIENT.md).
 
 ## Example
 
@@ -94,9 +81,7 @@ cd examples/nes && go run . game.nes
 
 ## Docs
 
-- [Protocol reference](docs/PROTOCOL.md): frames, opcodes, payloads,
-  state block.
-- [Go client](docs/CLIENT.md): minimal consumers, end to end.
+- [Go client](docs/CLIENT.md): a minimal consumer, end to end.
 - [Architecture](docs/ARCHITECTURE.md): layers, timing model,
   determinism.
 - [Mappers](docs/MAPPERS.md): the full supported list.

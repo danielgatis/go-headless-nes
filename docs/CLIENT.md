@@ -1,16 +1,8 @@
 # Go client
 
-There are two ways to drive the core, both from the root package
-`github.com/danielgatis/go-headless-nes` (package `nes`):
-
-- As a library: `nes.Console` embeds the emulator in your process.
-  No subprocess, no protocol.
-- Over the protocol: launch the `cmd/nesd` binary with
-  `os/exec` and wire an `Encoder` to its stdin and a `Decoder` to its
-  stdout, or start it with `--listen` and connect over TCP. Use this
-  when you're crossing a process or language boundary.
-
-## As a library
+You drive the core from package `nes`
+(`github.com/danielgatis/go-headless-nes/nes`): `nes.Console` embeds the
+emulator in your process, no subprocess and no wire in between.
 
 ```go
 package main
@@ -18,7 +10,7 @@ package main
 import (
 	"os"
 
-	nes "github.com/danielgatis/go-headless-nes"
+	"github.com/danielgatis/go-headless-nes/nes"
 )
 
 func main() {
@@ -41,10 +33,10 @@ func main() {
 }
 ```
 
-The full surface mirrors the protocol one-to-one: `Step`, `Reset`,
-`Peek`/`Poke`/`ReadMem`, `SaveState`/`LoadState`, `State`, breakpoints and
-watchpoints, `Disasm`, `SetTrace`, `PatchPRG`/`PatchCHR`/`ReadPRG`/`ReadCHR`,
-mapper state, and `SetRegion`.
+The rest of the surface: `Step`, `Reset`, `Peek`/`Poke`/`ReadMem`,
+`SaveState`/`LoadState`, `State`, breakpoints and watchpoints, `Disasm`,
+`SetTrace`, `PatchPRG`/`PatchCHR`/`ReadPRG`/`ReadCHR`, mapper state, and
+`SetRegion`.
 
 `NewConsole` auto-detects the TV system from the ROM header, corrected
 against a built-in cartridge database (many dumps misreport the region),
@@ -99,81 +91,9 @@ and `Audio` raw float32 samples if you want your own palette or mixing.
 
 For a complete frontend built this way, see
 [examples/nes](../examples/nes/main.go): a desktop player on Ebitengine,
-kept in a separate Go module so its dependencies stay out of the core.
-
-## Over the protocol
-
-```go
-package main
-
-import (
-	"io"
-	"os"
-	"os/exec"
-
-	nes "github.com/danielgatis/go-headless-nes"
-)
-
-func main() {
-	rom, _ := os.ReadFile(os.Args[1])
-
-	cmd := exec.Command("nesd")
-	stdin, _ := cmd.StdinPipe()
-	stdout, _ := cmd.StdoutPipe()
-	if err := cmd.Start(); err != nil {
-		panic(err)
-	}
-
-	enc := nes.NewEncoder(stdin)
-	dec := nes.NewDecoder(stdout)
-
-	dec.ReadHandshake()                     // core sends its version
-	enc.WriteHandshake(nes.ProtocolVersion) // we send ours
-
-	enc.Write(nes.OpLoadROM, rom)
-	for i := 0; i < 60; i++ {
-		enc.Write(nes.OpRunFrame, nil) // each yields a Video + Audio event
-	}
-	stdin.Close() // no more commands; the core exits at EOF
-
-	for {
-		f, err := dec.Read()
-		if err == io.EOF {
-			break
-		}
-		switch f.Op {
-		case nes.OpVideo: // f.Payload: 256*240 NES color indices (0-63)
-		case nes.OpAudio: // f.Payload: little-endian float32 samples
-		}
-	}
-	cmd.Wait()
-}
-```
-
-One process is one instance. For N emulators, launch N processes, each
-with its own encoder/decoder pair.
-
-### Over TCP
-
-`nesd --listen 127.0.0.1:4444` serves the same protocol on a
-TCP socket instead of stdin/stdout. Each connection gets its own console,
-so a single core process can host N independent instances, and clients in
-any language (or on another machine) can connect. The client code is the
-same as above, with the pipes swapped for a `net.Conn`:
-
-```go
-conn, _ := net.Dial("tcp", "127.0.0.1:4444")
-enc := nes.NewEncoder(conn)
-dec := nes.NewDecoder(conn)
-// handshake and drive exactly as with pipes
-```
-
-With `--listen 127.0.0.1:0` the OS picks a free port. The core announces
-the bound address on stderr (`listening on 127.0.0.1:53808`), so a parent
-process can scrape it from there.
-
-The full opcode table, payload layouts, the structured state block and the
-error semantics are in [PROTOCOL.md](PROTOCOL.md).
+kept in a separate Go module so its dependencies stay out of the core. The
+[examples/wasm](../examples/wasm/main.go) page drives the same `Console`
+API from the browser through `syscall/js`.
 
 ## Testing
 
@@ -184,11 +104,7 @@ error semantics are in [PROTOCOL.md](PROTOCOL.md).
 - The blargg CPU, PPU, APU, OAM and MMC3 suites and AccuracyCoin (141/141)
   all run, and a smoke pass boots and runs every bundled test ROM.
 - The snapshot codec gets a 200k-step round-trip that fails if any field
-  goes missing from the wire form.
-- The protocol has codec round-trips and framing edge cases, plus
-  end-to-end server tests: video and audio emission, peek and poke, step
-  and state, breakpoint stops, disassembly, PRG patch and read-back,
-  mapper round-trip, and snapshot determinism across the wire.
+  goes missing from the serialized form.
 - Per-package unit tests cover CPU quirks, PPU timing and rendering, APU
   channels, and every mapper.
 
