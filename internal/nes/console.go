@@ -35,6 +35,99 @@ type NES struct {
 	// new method values.
 	dmcRequest func()
 	dmcStop    func()
+
+	// evt holds the optional debug event taps; evtOn is true when any is
+	// installed, gating the per-instruction polling. The last* fields are
+	// edge-detection baselines for the polled events.
+	evt          EventHooks
+	evtOn        bool
+	lastFrame    uint64
+	lastScanline int16
+	lastSprite0  bool
+}
+
+// EventHooks are optional debug callbacks for discrete machine events. Every
+// field is nil by default; installing none leaves the per-instruction path a
+// single bool check. OnInstruction, OnFrame, OnScanline and OnSpriteZeroHit
+// fire at instruction granularity (the poll runs after each instruction);
+// OnNMI/OnIRQ fire from the interrupt sequence and OnOAMDMA/OnDMCDMA from the
+// DMA start, so those are exact.
+type EventHooks struct {
+	OnInstruction   func(pc uint16, opcode byte)
+	OnNMI           func()
+	OnIRQ           func()
+	OnFrame         func(frame uint64)
+	OnScanline      func(scanline int)
+	OnSpriteZeroHit func(scanline, dot int)
+	OnOAMDMA        func(page byte)
+	OnDMCDMA        func()
+}
+
+// SetEventHooks installs (or with the zero value clears) the debug event
+// taps. It re-seats the edge baselines to the current state so the first
+// instruction afterward cannot report a stale edge.
+func (c *NES) SetEventHooks(h EventHooks) {
+	c.evt = h
+	c.evtOn = h.OnInstruction != nil || h.OnNMI != nil || h.OnIRQ != nil ||
+		h.OnFrame != nil || h.OnScanline != nil || h.OnSpriteZeroHit != nil ||
+		h.OnOAMDMA != nil || h.OnDMCDMA != nil
+	c.lastFrame = c.PPU.Frame
+	c.lastScanline = c.PPU.Scanline
+	c.lastSprite0 = c.PPU.Status.Sprite0Hit
+	if h.OnNMI != nil || h.OnIRQ != nil {
+		c.CPU.SetInterruptHook(c.emitInterrupt)
+	} else {
+		c.CPU.SetInterruptHook(nil)
+	}
+}
+
+// emitInterrupt routes the CPU's interrupt tap to the event hooks.
+func (c *NES) emitInterrupt(nmi bool) {
+	if nmi {
+		if c.evt.OnNMI != nil {
+			c.evt.OnNMI()
+		}
+		return
+	}
+	if c.evt.OnIRQ != nil {
+		c.evt.OnIRQ()
+	}
+}
+
+// emitStepEvents polls the edge-detected events after an instruction.
+func (c *NES) emitStepEvents() {
+	if sl := c.PPU.Scanline; sl != c.lastScanline {
+		c.lastScanline = sl
+		if c.evt.OnScanline != nil {
+			c.evt.OnScanline(int(sl))
+		}
+	}
+	if hit := c.PPU.Status.Sprite0Hit; hit && !c.lastSprite0 && c.evt.OnSpriteZeroHit != nil {
+		c.evt.OnSpriteZeroHit(int(c.PPU.Scanline), int(c.PPU.Cycle))
+	}
+	c.lastSprite0 = c.PPU.Status.Sprite0Hit
+	if f := c.PPU.Frame; f != c.lastFrame {
+		c.lastFrame = f
+		if c.evt.OnFrame != nil {
+			c.evt.OnFrame(f)
+		}
+	}
+}
+
+// startOAMDMA begins an OAM DMA, emitting the event first.
+func (c *NES) startOAMDMA(page byte) {
+	if c.evt.OnOAMDMA != nil {
+		c.evt.OnOAMDMA(page)
+	}
+	c.CPU.StartOAMDMA(page)
+}
+
+// startDMCDMA begins a DMC sample fetch, emitting the event first.
+func (c *NES) startDMCDMA() {
+	if c.evt.OnDMCDMA != nil {
+		c.evt.OnDMCDMA()
+	}
+	c.CPU.StartDmcTransfer()
 }
 
 // prgHandler maps the cartridge board's PRG side ($4020-$FFFF) into the CPU
@@ -197,11 +290,12 @@ func New(cart *cartridge.Cartridge) (*NES, error) {
 		pk.SetCPUPeek(c.mem.Peek)
 	}
 	c.ctrl.SetCycleCount(func() uint64 { return c.CPU.Cycles })
-	c.mem.Register(&oamDMAHandler{start: c.CPU.StartOAMDMA})
+	c.mem.Register(&oamDMAHandler{start: c.startOAMDMA})
 
 	// The DMC fetches sample bytes through the CPU's DMA unit: it requests a
-	// transfer, and the DMA delivers the byte back via the hooks below.
-	c.dmcRequest = c.CPU.StartDmcTransfer
+	// transfer, and the DMA delivers the byte back via the hooks below. The
+	// request goes through startDMCDMA so a debug tap can observe it.
+	c.dmcRequest = c.startDMCDMA
 	c.dmcStop = c.CPU.StopDmcTransfer
 	c.APU.SetDMAHooks(c.dmcRequest, c.dmcStop)
 	c.CPU.SetDMCHooks(c.APU.DMCReadAddr, c.APU.DMCDeliver)
@@ -301,8 +395,18 @@ func (c *NES) sample() {
 }
 
 // Step executes one CPU instruction; the rest of the machine advances inside
-// its bus cycles.
-func (c *NES) Step() int { return c.CPU.Step() }
+// its bus cycles. With debug event hooks installed it emits the instruction
+// and post-instruction events around the step.
+func (c *NES) Step() int {
+	if c.evtOn && c.evt.OnInstruction != nil {
+		c.evt.OnInstruction(c.CPU.Reg.PC, c.Peek(c.CPU.Reg.PC))
+	}
+	n := c.CPU.Step()
+	if c.evtOn {
+		c.emitStepEvents()
+	}
+	return n
+}
 
 // RunFrame steps the machine until the picture unit completes a frame.
 func (c *NES) RunFrame() {

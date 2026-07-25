@@ -121,7 +121,16 @@ type CPU struct {
 	// fetched byte back.
 	dmcAddr    func() uint16
 	dmcDeliver func(byte)
+
+	// onInterrupt, when set, is called at the moment the interrupt sequence
+	// commits to a vector, with nmi true for an NMI and false for an IRQ. It
+	// is a debug tap; nil in normal operation.
+	onInterrupt func(nmi bool)
 }
+
+// SetInterruptHook installs a debug callback invoked when the CPU services
+// an interrupt (nmi true for NMI, false for IRQ). Pass nil to remove it.
+func (c *CPU) SetInterruptHook(fn func(nmi bool)) { c.onInterrupt = fn }
 
 // New returns a 6502 wired to the given address space, in power-on state.
 func New(mem *bus.Memory) *CPU {
@@ -494,6 +503,7 @@ func (c *CPU) irq() {
 	c.dummyPCRead()
 	c.push16(c.Reg.PC)
 
+	nmi := c.needNMI
 	if c.needNMI {
 		c.needNMI = false
 		c.push(c.Reg.P&^FlagB | FlagU) // interrupts push with B clear
@@ -503,5 +513,8 @@ func (c *CPU) irq() {
 		c.push(c.Reg.P | FlagU)
 		c.setFlags(FlagI)
 		c.Reg.PC = c.readWord(VecIRQ)
+	}
+	if c.onInterrupt != nil {
+		c.onInterrupt(nmi)
 	}
 }

@@ -80,6 +80,13 @@ type CartInfo struct {
 	Region     Region // TV system declared by the header
 }
 
+// Mirroring reports the board's current nametable mirroring as text
+// ("Horizontal", "Vertical", "SingleLow", "SingleHigh", "FourScreen").
+// Unlike CartInfo.Mirroring, which is the header's initial value, this
+// tracks a mapper that changes mirroring at runtime (MMC1 and others), so a
+// nametable viewer can label what it is showing right now.
+func (c *Console) Mirroring() string { return c.core.Mapper.Mirroring().String() }
+
 // CartInfo reports the loaded cartridge's fixed properties.
 func (c *Console) CartInfo() CartInfo {
 	cart := c.core.Cart

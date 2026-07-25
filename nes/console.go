@@ -96,8 +96,9 @@ type Console struct {
 	snap  core.Snapshot
 	audio []float32
 
-	observer Observer
-	filter   MemFilter
+	observer  Observer
+	filter    MemFilter
+	eventSink EventSink
 }
 
 // NewConsole boots a console from an iNES ROM image.
