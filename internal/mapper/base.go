@@ -56,6 +56,14 @@ func (b *base) writePRGRAM(addr uint16, v byte) {
 	b.prgRAM[addr&0x1FFF] = v
 }
 
+// chrSize is the size of the board's CHR memory, ROM or RAM.
+func (b *base) chrSize() int {
+	if b.chr != nil {
+		return len(b.chr)
+	}
+	return len(b.chrRAM)
+}
+
 // chrRead reads CHR ROM or RAM through the given bank window.
 func (b *base) chrRead(bank, size int, addr uint16) byte {
 	if b.chr != nil {

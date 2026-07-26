@@ -104,6 +104,27 @@ func TestPPUStateAgreesWithState(t *testing.T) {
 	}
 }
 
+func TestMapperInfo(t *testing.T) {
+	c := newConsole(t)
+	info := c.MapperInfo()
+	if info.ID != 0 {
+		t.Errorf("mapper ID = %d, want 0", info.ID)
+	}
+	if info.Mirroring == "" {
+		t.Error("Mirroring empty")
+	}
+	// NROM implements BankMapper, so the layout is known.
+	if !info.HasBankInfo {
+		t.Fatal("HasBankInfo = false, expected NROM to report banks")
+	}
+	if len(info.PRGBanks) != 4 {
+		t.Errorf("PRGBanks length = %d, want 4", len(info.PRGBanks))
+	}
+	if len(info.CHRBanks) != 8 {
+		t.Errorf("CHRBanks length = %d, want 8", len(info.CHRBanks))
+	}
+}
+
 func TestCartInfo(t *testing.T) {
 	c := newConsole(t)
 	info := c.CartInfo()

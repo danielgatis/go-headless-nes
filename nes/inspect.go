@@ -1,6 +1,9 @@
 package nes
 
-import "github.com/danielgatis/go-headless-nes/internal/errs"
+import (
+	"github.com/danielgatis/go-headless-nes/internal/errs"
+	"github.com/danielgatis/go-headless-nes/internal/mapper"
+)
 
 // PeekVRAM reads one byte of the PPU address space ($0000-$3FFF) as a
 // rendering fetch would resolve it: pattern tables through the mapper,
@@ -78,6 +81,39 @@ type CartInfo struct {
 	Mirroring  string // "Horizontal", "Vertical", "SingleLow", ...
 	HasBattery bool   // battery-backed save RAM present
 	Region     Region // TV system declared by the header
+}
+
+// MapperInfo is the decoded mapper state a mapper-view panel shows: the
+// number, current mirroring, and the live bank layout when the board reports
+// it. PRGBanks holds one 8 KiB bank index per CPU window ($8000, $A000,
+// $C000, $E000); CHRBanks holds one 1 KiB bank index per PPU window from
+// $0000. Both are nil (and HasBankInfo false) for a board whose banking is
+// not yet decoded, in which case MapperState still gives the raw registers.
+type MapperInfo struct {
+	ID          uint16
+	Submapper   byte
+	Mirroring   string
+	PRGBanks    []int
+	CHRBanks    []int
+	HasBankInfo bool
+}
+
+// MapperInfo reports the current decoded mapper state.
+func (c *Console) MapperInfo() MapperInfo {
+	m := c.core.Mapper
+	info := MapperInfo{
+		ID:        c.core.Cart.MapperID,
+		Submapper: c.core.Cart.Submapper,
+		Mirroring: m.Mirroring().String(),
+	}
+	if bm, ok := m.(mapper.BankMapper); ok {
+		p := bm.PRGBankMap()
+		ch := bm.CHRBankMap()
+		info.PRGBanks = p[:]
+		info.CHRBanks = ch[:]
+		info.HasBankInfo = true
+	}
+	return info
 }
 
 // Mirroring reports the board's current nametable mirroring as text
