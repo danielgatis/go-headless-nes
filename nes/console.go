@@ -59,6 +59,8 @@ const (
 	StopBreakpoint
 	// StopWatchpoint means a watched address changed value.
 	StopWatchpoint
+	// StopHalt means Halt was requested while RunFrame was running.
+	StopHalt
 )
 
 // Stop describes a debugger halt.
@@ -128,6 +130,13 @@ func (c *Console) RunFrame() Stop {
 
 // Step executes a single CPU instruction.
 func (c *Console) Step() Stop { return stopOf(c.debug.StepInstruction()) }
+
+// Halt asks a running RunFrame to return early, at the next instruction
+// boundary, with a Stop whose Reason is StopHalt. It is the one Console
+// method safe to call from another goroutine: a UI or debug thread uses it
+// to interrupt a free-running RunFrame. The request is cleared when the next
+// RunFrame begins, so it interrupts at most the run in flight.
+func (c *Console) Halt() { c.core.Halt() }
 
 // Reset presses the console's reset button.
 func (c *Console) Reset() { c.core.Reset() }

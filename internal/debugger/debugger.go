@@ -42,6 +42,8 @@ const (
 	StopBreakpoint
 	// StopWatchpoint means a watched address changed value.
 	StopWatchpoint
+	// StopHalt means Halt was requested (e.g. from another goroutine).
+	StopHalt
 )
 
 // Stop describes a debugger halt.
@@ -126,6 +128,7 @@ func (d *Debugger) StepInstruction() Stop {
 // one instruction executes before breakpoints re-arm, the standard
 // step-off, so resuming cannot re-trigger the same hit forever.
 func (d *Debugger) RunFrame() Stop {
+	d.console.ClearHalt()
 	if _, parked := d.breakpoints[d.console.CPU.Reg.PC]; parked {
 		if stop := d.StepInstruction(); stop.Reason != StopNone {
 			return stop
@@ -143,6 +146,9 @@ func (d *Debugger) RunFrame() Stop {
 		}
 		if d.console.PPU.TakeFrame() {
 			return Stop{}
+		}
+		if d.console.Halted() {
+			return Stop{Reason: StopHalt}
 		}
 	}
 }

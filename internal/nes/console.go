@@ -4,6 +4,8 @@
 package nes
 
 import (
+	"sync/atomic"
+
 	"github.com/danielgatis/go-headless-nes/internal/apu"
 	"github.com/danielgatis/go-headless-nes/internal/bus"
 	"github.com/danielgatis/go-headless-nes/internal/cartridge"
@@ -44,7 +46,24 @@ type NES struct {
 	lastFrame    uint64
 	lastScanline int16
 	lastSprite0  bool
+
+	// halt is a request to break out of a running RunFrame. It is the one
+	// field a second goroutine may touch while the emulation goroutine runs,
+	// so it is atomic; everything else stays single-goroutine.
+	halt atomic.Bool
 }
+
+// Halt asks a running RunFrame to return at the next instruction boundary.
+// It is safe to call from another goroutine (for example a UI thread asking
+// the emulation loop to pause). The flag is cleared when the next RunFrame
+// begins.
+func (c *NES) Halt() { c.halt.Store(true) }
+
+// Halted reports whether a halt has been requested and not yet consumed.
+func (c *NES) Halted() bool { return c.halt.Load() }
+
+// ClearHalt drops a pending halt request. RunFrame does this at entry.
+func (c *NES) ClearHalt() { c.halt.Store(false) }
 
 // EventHooks are optional debug callbacks for discrete machine events. Every
 // field is nil by default; installing none leaves the per-instruction path a
