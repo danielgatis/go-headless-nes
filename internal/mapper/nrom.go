@@ -20,8 +20,9 @@ func (m *NROM) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
 		// Address lines above the ROM size are not connected, so a
-		// 16 KiB ROM appears twice in the 32 KiB window.
-		return m.prg[int(addr-0x8000)%len(m.prg)]
+		// 16 KiB ROM appears twice in the 32 KiB window. Routed through
+		// win (a single whole-ROM window) so a bank-map probe sees it.
+		return m.win(m.prg, 0, len(m.prg))[int(addr-0x8000)%len(m.prg)]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

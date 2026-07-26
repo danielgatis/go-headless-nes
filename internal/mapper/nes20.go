@@ -105,9 +105,9 @@ func (m *T262) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		p0, p1 := m.prgSlots()
 		if addr < 0xC000 {
-			return window(m.prg, p0, 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, p0, 0x4000)[addr&0x3FFF]
 		}
-		return window(m.prg, p1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, p1, 0x4000)[addr&0x3FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -167,10 +167,10 @@ func (m *Gs2004) WritePRG(addr uint16, v byte) {
 func (m *Gs2004) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	case addr >= 0x6000:
 		// A fixed 8 KiB PRG-ROM window (the reference maps bank 0x20 in 8 KiB units).
-		return window(m.prg, 0x20, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 0x20, 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -211,7 +211,7 @@ func (m *Gkcx1) WritePRG(addr uint16, _ byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Gkcx1) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -263,7 +263,7 @@ func (m *Edu2000) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Edu2000) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg&0x1F), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg&0x1F), 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -319,15 +319,15 @@ func (m *Smb2j) ReadPRG(addr uint16) byte {
 		// Eight 4 KiB banks: low four from prgHalf*4, high four fixed at 4-7.
 		slot := int((addr - 0x8000) >> 12)
 		if slot < 4 {
-			return window(m.prg, m.prgHalf*4+slot, 0x1000)[addr&0x0FFF]
+			return m.win(m.prg, m.prgHalf*4+slot, 0x1000)[addr&0x0FFF]
 		}
-		return window(m.prg, slot, 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, slot, 0x1000)[addr&0x0FFF]
 	case addr >= 0x7000:
-		return window(m.prg, n-1, 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, n-1, 0x1000)[addr&0x0FFF]
 	case addr >= 0x6000:
-		return window(m.prg, n-2, 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, n-2, 0x1000)[addr&0x0FFF]
 	case addr >= 0x5000:
-		return window(m.prg, n-3, 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, n-3, 0x1000)[addr&0x0FFF]
 	}
 	return m.openBus()
 }
@@ -406,9 +406,9 @@ func (m *Lh51) ReadPRG(addr uint16) byte {
 		// Three fixed top banks (13, 14, 15 for a 128 KiB ROM); use the
 		// last three 8 KiB banks of the ROM generically.
 		slot := int((addr - 0xA000) >> 13) // 0..2
-		return window(m.prg, -3+slot, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -3+slot, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prg0), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prg0), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -461,7 +461,7 @@ func (m *Rt01) ReadPRG(addr uint16) byte {
 		return 0xF2
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, int((addr-0x8000)>>14), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int((addr-0x8000)>>14), 0x4000)[addr&0x3FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -584,7 +584,7 @@ func (m *T230) prgBank(addr uint16) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *T230) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -722,7 +722,7 @@ func (m *Tf1201) prgBank(addr uint16) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Tf1201) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -861,13 +861,13 @@ func (m *Ax5705) WritePRG(addr uint16, v byte) {
 func (m *Ax5705) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0xC000:
-		return window(m.prg, -2, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -2, 0x2000)[addr&0x1FFF]
 	case addr >= 0xA000:
-		return window(m.prg, m.prg1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prg1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prg0, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prg0, 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -998,7 +998,7 @@ func (m *Mapper253) prgBank(addr uint16) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper253) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -1019,16 +1019,16 @@ func (m *Mapper253) chrSel(addr uint16) (bank int, ram bool) {
 func (m *Mapper253) ReadCHR(addr uint16) byte {
 	bank, ram := m.chrSel(addr)
 	if ram {
-		return window(m.chrRAM[:], bank, 0x400)[addr&0x3FF]
+		return m.win(m.chrRAM[:], bank, 0x400)[addr&0x3FF]
 	}
-	return window(m.chr, bank, 0x400)[addr&0x3FF]
+	return m.win(m.chr, bank, 0x400)[addr&0x3FF]
 }
 
 // WriteCHR handles a write into the CHR address space.
 func (m *Mapper253) WriteCHR(addr uint16, v byte) {
 	bank, ram := m.chrSel(addr)
 	if ram {
-		window(m.chrRAM[:], bank, 0x400)[addr&0x3FF] = v
+		m.win(m.chrRAM[:], bank, 0x400)[addr&0x3FF] = v
 	}
 }
 

@@ -44,11 +44,11 @@ func (m *VRC6) ramEnabled() bool { return m.bankingMode&0x80 != 0 }
 func (m *VRC6) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0xC000:
-		return window(m.prg, int(m.prg8), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prg8), 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prg16)|int((addr>>13)&1), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prg16)|int((addr>>13)&1), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if !m.ramEnabled() {
 			return m.openBus()

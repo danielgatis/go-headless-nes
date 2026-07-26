@@ -42,10 +42,10 @@ func (m *VRC7) applyControl() {
 func (m *VRC7) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
 		bank := m.prgBanks[(addr-0x8000)>>13]
-		return window(m.prg, int(bank), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(bank), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if !m.ramEnabled() {
 			return m.openBus()

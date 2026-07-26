@@ -20,7 +20,7 @@ func NewAxROM(c *cartridge.Cartridge) *AxROM {
 func (m *AxROM) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return window(m.prg, int(m.reg&7), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg&7), 0x8000)[addr&0x7FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

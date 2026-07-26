@@ -20,7 +20,7 @@ func NewSunsoft184(c *cartridge.Cartridge) *Sunsoft184 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Sunsoft184) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -74,9 +74,9 @@ func NewSunsoft89(c *cartridge.Cartridge) *Sunsoft89 {
 func (m *Sunsoft89) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -138,9 +138,9 @@ func NewSunsoft93(c *cartridge.Cartridge) *Sunsoft93 {
 func (m *Sunsoft93) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -206,9 +206,9 @@ func NewSunsoft3(c *cartridge.Cartridge) *Sunsoft3 {
 func (m *Sunsoft3) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -337,9 +337,9 @@ func NewSunsoftFME7(c *cartridge.Cartridge) *SunsoftFME7 {
 func (m *SunsoftFME7) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if m.workReg&0x40 != 0 {
 			if m.workReg&0x80 == 0 {
@@ -347,7 +347,7 @@ func (m *SunsoftFME7) ReadPRG(addr uint16) byte {
 			}
 			return m.readPRGRAM(addr)
 		}
-		return window(m.prg, int(m.workReg&0x3F), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.workReg&0x3F), 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }

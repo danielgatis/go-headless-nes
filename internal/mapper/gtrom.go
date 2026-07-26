@@ -53,7 +53,7 @@ func (m *GTROM) ReadPRG(addr uint16) byte {
 		if v, ok := m.flash.read(addr); ok {
 			return v
 		}
-		return window(m.prg, int(m.prgPage), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.prgPage), 0x8000)[addr&0x7FFF]
 	case addr >= 0x7000, addr >= 0x5000 && addr < 0x6000:
 		// Reading the register range latches the floating bus value.
 		m.updateRegister(m.openBus())

@@ -34,13 +34,13 @@ func NewKaiser202(c *cartridge.Cartridge) *Kaiser202 {
 func (m *Kaiser202) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
 		slot := (addr - 0x8000) >> 13
-		return window(m.prg, int(m.prgRegs[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgRegs[slot]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if m.useROM {
-			return window(m.prg, int(m.prgRegs[3]), 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, int(m.prgRegs[3]), 0x2000)[addr&0x1FFF]
 		}
 		return m.readPRGRAM(addr)
 	}
@@ -181,7 +181,7 @@ func NewKaiser7058(c *cartridge.Cartridge) *Kaiser7058 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Kaiser7058) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -255,11 +255,11 @@ func (m *Kaiser7022) ReadPRG(addr uint16) byte {
 	if addr == 0xFFFC {
 		// Reading the reset vector latches the bank register into both
 		// 16 KiB PRG windows and the CHR bank.
-		v := window(m.prg, int(m.reg), 0x4000)[addr&0x3FFF]
+		v := m.win(m.prg, int(m.reg), 0x4000)[addr&0x3FFF]
 		return v
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.reg), 0x4000)[addr&0x3FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -330,7 +330,7 @@ func (m *Kaiser7012) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Kaiser7012) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -375,10 +375,10 @@ func (m *Kaiser7031) ReadPRG(addr uint16) byte {
 	case addr >= 0x8000:
 		// 16 fixed 2 KiB windows in reverse (slot i -> bank 15-i).
 		slot := int((addr - 0x8000) >> 11)
-		return window(m.prg, 15-slot, 0x800)[addr&0x7FF]
+		return m.win(m.prg, 15-slot, 0x800)[addr&0x7FF]
 	case addr >= 0x6000:
 		win := int((addr - 0x6000) >> 11)
-		return window(m.prg, int(m.regs[win]), 0x800)[addr&0x7FF]
+		return m.win(m.prg, int(m.regs[win]), 0x800)[addr&0x7FF]
 	}
 	return m.openBus()
 }
@@ -439,9 +439,9 @@ func (m *Kaiser7016) ReadPRG(addr uint16) byte {
 	case addr >= 0x8000:
 		// Fixed top 32 KiB (banks 0x0C-0x0F in 8 KiB units).
 		slot := int((addr - 0x8000) >> 13)
-		return window(m.prg, 0x0C+slot, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 0x0C+slot, 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
-		return window(m.prg, m.prgReg, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgReg, 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -511,15 +511,15 @@ func (m *Kaiser7057) WritePRG(addr uint16, v byte) {
 func (m *Kaiser7057) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, 0x3C+int((addr-0xE000)>>11), 0x800)[addr&0x7FF]
+		return m.win(m.prg, 0x3C+int((addr-0xE000)>>11), 0x800)[addr&0x7FF]
 	case addr >= 0xC000:
-		return window(m.prg, 0x38+int((addr-0xC000)>>11), 0x800)[addr&0x7FF]
+		return m.win(m.prg, 0x38+int((addr-0xC000)>>11), 0x800)[addr&0x7FF]
 	case addr >= 0xA000:
-		return window(m.prg, 0x34+int((addr-0xA000)>>11), 0x800)[addr&0x7FF]
+		return m.win(m.prg, 0x34+int((addr-0xA000)>>11), 0x800)[addr&0x7FF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.regs[(addr-0x8000)>>11&3]), 0x800)[addr&0x7FF]
+		return m.win(m.prg, int(m.regs[(addr-0x8000)>>11&3]), 0x800)[addr&0x7FF]
 	case addr >= 0x6000:
-		return window(m.prg, int(m.regs[4+((addr-0x6000)>>11&3)]), 0x800)[addr&0x7FF]
+		return m.win(m.prg, int(m.regs[4+((addr-0x6000)>>11&3)]), 0x800)[addr&0x7FF]
 	}
 	return m.openBus()
 }
@@ -585,11 +585,11 @@ func (m *Kaiser7017) WritePRG(addr uint16, v byte) {
 func (m *Kaiser7017) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0xA000:
-		return window(m.prg, 2, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 2, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prgReg, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgReg, 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -675,16 +675,16 @@ func (m *Kaiser7037) ReadPRG(addr uint16) byte {
 	// $C000-$DFFF two 8 KiB banks from reg7, $E000-$FFFF fixed to bank -2.
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -2+int((addr-0xE000)>>13), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -2+int((addr-0xE000)>>13), 0x2000)[addr&0x1FFF]
 	case addr >= 0xC000:
-		return window(m.prg, (int(m.regs[7])<<1)+int((addr-0xC000)>>12), 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, (int(m.regs[7])<<1)+int((addr-0xC000)>>12), 0x1000)[addr&0x0FFF]
 	case addr >= 0xA000:
-		return window(m.prg, -4+int((addr-0xA000)>>13), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -4+int((addr-0xA000)>>13), 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, (int(m.regs[6])<<1)+int((addr-0x8000)>>12), 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, (int(m.regs[6])<<1)+int((addr-0x8000)>>12), 0x1000)[addr&0x0FFF]
 	case addr >= 0x7000:
 		n := len(m.prg) / 0x1000
-		return window(m.prg, n-1, 0x1000)[addr&0x0FFF]
+		return m.win(m.prg, n-1, 0x1000)[addr&0x0FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

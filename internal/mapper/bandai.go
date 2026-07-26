@@ -260,9 +260,9 @@ func (m *BandaiFCG) usesOuterBank() bool {
 func (m *BandaiFCG) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, int(0x0F|m.prgBankSelect), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(0x0F|m.prgBankSelect), 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgPage|m.prgBankSelect), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgPage|m.prgBankSelect), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		if m.id == 153 {
 			if m.wramEnabled {

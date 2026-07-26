@@ -86,7 +86,7 @@ func (m *MMC3Coolboy) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgPage(addr), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgPage(addr), 0x2000)[addr&0x1FFF]
 }
 
 // chrPage applies the COOLBOY CHR rewiring to the MMC3-resolved 1 KiB
@@ -128,7 +128,7 @@ func (m *MMC3Coolboy) chrPage(a uint16) int {
 func (m *MMC3Coolboy) ReadCHR(addr uint16) byte {
 	page := m.chrPage(addr)
 	if m.usesROM {
-		return window(m.chr, page, 0x400)[addr&0x3FF]
+		return m.win(m.chr, page, 0x400)[addr&0x3FF]
 	}
 	return m.bigCHR[(page<<10|int(addr&0x3FF))%len(m.bigCHR)]
 }

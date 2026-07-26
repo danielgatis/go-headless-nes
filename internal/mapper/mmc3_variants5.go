@@ -50,7 +50,7 @@ func (m *MMC3187) ReadPRG(addr uint16) byte {
 		return security187[m.exReg1&0x03]
 	}
 	if addr >= 0x8000 && m.exReg0&0x80 != 0 {
-		return window(m.prg, m.prg187Slot(int(addr>>13&3)), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prg187Slot(int(addr>>13&3)), 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }
@@ -137,7 +137,7 @@ func (m *MMC3189) ReadPRG(addr uint16) byte {
 		return m.MMC3.ReadPRG(addr)
 	}
 	page := int((m.prgReg|m.prgReg>>4)&0x07)*4 + int(addr>>13&3)
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 // Save writes the board's mapper-specific state into s.
@@ -199,7 +199,7 @@ func (m *MMC3224) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgSlot(int(addr>>13&3)), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgSlot(int(addr>>13&3)), 0x2000)[addr&0x1FFF]
 }
 
 // Save writes the board's mapper-specific state into s.

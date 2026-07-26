@@ -103,9 +103,9 @@ func (m *Namco163) ramWritable(addr uint16) bool {
 func (m *Namco163) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if m.variant == namco340 {
 			return m.openBus()

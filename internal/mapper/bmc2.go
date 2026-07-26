@@ -228,7 +228,7 @@ func (m *Bmc11160) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Bmc11160) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -291,10 +291,10 @@ func (m *BmcK3046) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *BmcK3046) ReadPRG(addr uint16) byte {
 	if addr >= 0xC000 {
-		return window(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -359,7 +359,7 @@ func (m *Mapper246) WritePRG(addr uint16, v byte) {
 func (m *Mapper246) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		slot := (addr - 0x8000) >> 13
-		return window(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6800 {
 		return m.readPRGRAM(addr)
@@ -416,9 +416,9 @@ func (m *Mapper120) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
 		slot := int((addr - 0x8000) >> 13)
-		return window(m.prg, 8+slot, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 8+slot, 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
-		return window(m.prg, int(m.prgReg), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg), 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -549,7 +549,7 @@ func (m *Bmc63) ReadPRG(addr uint16) byte {
 	if slot == 0 && m.openBus {
 		return m.openBusVal
 	}
-	return window(m.prg, m.prgBanks[slot], 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgBanks[slot], 0x2000)[addr&0x1FFF]
 }
 
 // ReadCHR returns the byte the CHR address space maps at addr.
@@ -641,7 +641,7 @@ func (m *Bmc70in1) prgBank(slot int) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Bmc70in1) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(int((addr-0x8000)>>14)), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prgBank(int((addr-0x8000)>>14)), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }

@@ -38,7 +38,7 @@ func (m *Mapper60) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper60) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.sel), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.sel), 0x4000)[addr&0x3FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -120,11 +120,11 @@ func (m *Mapper230) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
 		if m.contraMode {
-			return window(m.prg, 7, 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, 7, 0x4000)[addr&0x3FFF]
 		}
-		return window(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -263,7 +263,7 @@ func (m *ResetTxrom) ReadPRG(addr uint16) byte {
 		page += n
 	}
 	page = page&0x0F | int(m.resetCounter)<<4
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *ResetTxrom) chrPage(addr uint16) int {

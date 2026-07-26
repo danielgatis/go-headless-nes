@@ -94,7 +94,7 @@ func (m *Sachen8259) simpleMode() bool { return m.regs[7]&0x01 != 0 }
 func (m *Sachen8259) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return window(m.prg, int(m.regs[5]), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.regs[5]), 0x8000)[addr&0x7FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

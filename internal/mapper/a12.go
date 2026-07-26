@@ -52,9 +52,9 @@ func (m *Mapper35) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		slot := (addr - 0x8000) >> 13
 		if slot == 3 {
-			return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 		}
-		return window(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -163,9 +163,9 @@ func (m *Mapper117) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		slot := (addr - 0x8000) >> 13
 		if slot == 3 {
-			return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 		}
-		return window(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -284,13 +284,13 @@ func (m *Mapper222) ReadPRG(addr uint16) byte {
 		slot := (addr - 0x8000) >> 13 // 0..3
 		switch slot {
 		case 0:
-			return window(m.prg, int(m.prgReg[0]), 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, int(m.prgReg[0]), 0x2000)[addr&0x1FFF]
 		case 1:
-			return window(m.prg, int(m.prgReg[1]), 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, int(m.prgReg[1]), 0x2000)[addr&0x1FFF]
 		case 2:
-			return window(m.prg, -2, 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, -2, 0x2000)[addr&0x1FFF]
 		default:
-			return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 		}
 	}
 	if addr >= 0x6000 {

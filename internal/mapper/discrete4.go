@@ -26,7 +26,7 @@ func NewColorDreams144(c *cartridge.Cartridge) *ColorDreams144 {
 func (m *ColorDreams144) WritePRG(addr uint16, v byte) {
 	if addr >= 0x8000 {
 		// 144 ORs in ROM bit 0 (bus conflict): the ROM byte at addr wins.
-		v |= window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF] & 0x01
+		v |= m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF] & 0x01
 		m.prgBank = int(v & 0x0F)
 		m.chrBank = int(v>>4) & 0x0F
 		return
@@ -39,7 +39,7 @@ func (m *ColorDreams144) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *ColorDreams144) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -294,7 +294,7 @@ func (m *Mapper241) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper241) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.prgBank), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.prgBank), 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -403,7 +403,7 @@ func (m *Mapper234) ReadPRG(addr uint16) byte {
 	var v byte
 	switch {
 	case addr >= 0x8000:
-		v = window(m.prg, m.prgBank(), 0x8000)[addr&0x7FFF]
+		v = m.win(m.prg, m.prgBank(), 0x8000)[addr&0x7FFF]
 	case addr >= 0x6000:
 		v = m.readPRGRAM(addr)
 	default:
@@ -487,7 +487,7 @@ func (m *Mapper244) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper244) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)

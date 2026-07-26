@@ -20,7 +20,7 @@ func NewColorDreams(c *cartridge.Cartridge) *ColorDreams {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *ColorDreams) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg&3), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg&3), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -59,7 +59,7 @@ func NewGxROM(c *cartridge.Cartridge) *GxROM {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *GxROM) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg>>4&3), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg>>4&3), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -104,9 +104,9 @@ func NewCamerica(c *cartridge.Cartridge) *Camerica {
 func (m *Camerica) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -177,7 +177,7 @@ func NewNINA03(c *cartridge.Cartridge) *NINA03 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *NINA03) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg>>3&1), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg>>3&1), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -274,9 +274,9 @@ func NewUN1ROM(c *cartridge.Cartridge) *UN1ROM {
 func (m *UN1ROM) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -315,7 +315,7 @@ func NewJaleco140(c *cartridge.Cartridge) *Jaleco140 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Jaleco140) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg>>4&3), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg>>4&3), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -355,9 +355,9 @@ func NewUNROM180(c *cartridge.Cartridge) *UNROM180 {
 func (m *UNROM180) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, 0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, 0, 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -401,9 +401,9 @@ func (m *Quattro) ReadPRG(addr uint16) byte {
 	block := int(m.block) * 4
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, block+3, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, block+3, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, block+int(m.inner), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, block+int(m.inner), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }

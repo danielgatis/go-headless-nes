@@ -50,7 +50,7 @@ func (m *MMC3Multi37) ReadPRG(addr uint16) byte {
 	default: // 4-6
 		page = page&0x0F | 0x10
 	}
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Multi37) chrPage(addr uint16) int {
@@ -119,7 +119,7 @@ func (m *MMC3Multi44) ReadPRG(addr uint16) byte {
 		page &= 0x1F
 	}
 	page |= int(m.block) * 0x10
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Multi44) chrPage(addr uint16) int {
@@ -195,7 +195,7 @@ func (m *MMC3Multi45) ReadPRG(addr uint16) byte {
 	page := m.prgBank(addr) & 0x3F
 	page &= 0x3F ^ int(m.reg[3]&0x3F)
 	page |= int(m.reg[1])
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Multi45) chrPage(addr uint16) int {
@@ -260,7 +260,7 @@ func (m *MMC3Multi47) ReadPRG(addr uint16) byte {
 		return m.MMC3.ReadPRG(addr)
 	}
 	page := m.prgBank(addr)&0x0F | int(m.block)<<4
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Multi47) chrPage(addr uint16) int {
@@ -329,7 +329,7 @@ func (m *MMC3Multi49) ReadPRG(addr uint16) byte {
 	} else {
 		page = int(m.prgReg)*4 + slot
 	}
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Multi49) chrPage(addr uint16) int {
@@ -401,7 +401,7 @@ func (m *MMC3Multi52) ReadPRG(addr uint16) byte {
 	} else {
 		page = page&0x1F | int(m.extra&0x06)<<4
 	}
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Multi52) chrPage(addr uint16) int {

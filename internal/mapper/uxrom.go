@@ -21,9 +21,9 @@ func NewUxROM(c *cartridge.Cartridge) *UxROM {
 func (m *UxROM) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.bank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

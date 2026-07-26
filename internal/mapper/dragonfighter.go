@@ -33,7 +33,7 @@ func (m *DragonFighter) ReadPRG(addr uint16) byte {
 	case addr >= 0x8000:
 		if addr < 0xA000 {
 			// $8000 window: forced to the protection PRG register.
-			return window(m.prg, int(m.exRegs[0]&0x1F), 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, int(m.exRegs[0]&0x1F), 0x2000)[addr&0x1FFF]
 		}
 		return m.MMC3.ReadPRG(addr)
 	case addr >= 0x6000 && addr < 0x7000:

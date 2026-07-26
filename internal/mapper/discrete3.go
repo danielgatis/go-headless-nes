@@ -37,7 +37,7 @@ func (m *ColorDreams46) chrBank() int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *ColorDreams46) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank(), 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		// The $6000 window is the outer register only, not RAM.
@@ -107,15 +107,15 @@ func (m *Mapper50) WritePRG(addr uint16, v byte) {
 func (m *Mapper50) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, 0x0B, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 0x0B, 0x2000)[addr&0x1FFF]
 	case addr >= 0xC000:
-		return window(m.prg, m.prgC000, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgC000, 0x2000)[addr&0x1FFF]
 	case addr >= 0xA000:
-		return window(m.prg, 0x09, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 0x09, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, 0x08, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 0x08, 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
-		return window(m.prg, 0x0F, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, 0x0F, 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -190,7 +190,7 @@ func (m *Mapper170) ReadPRG(addr uint16) byte {
 		return m.reg | byte((addr>>8)&0x7F)
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -307,7 +307,7 @@ func (m *Mapper216) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper216) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)

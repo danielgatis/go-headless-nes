@@ -52,11 +52,11 @@ func (m *Mapper91) WritePRG(addr uint16, v byte) {
 func (m *Mapper91) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -2+int((addr-0xC000)>>13), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -2+int((addr-0xC000)>>13), 0x2000)[addr&0x1FFF]
 	case addr >= 0xA000:
-		return window(m.prg, int(m.prgReg[1]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[1]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgReg[0]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[0]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -164,7 +164,7 @@ func (m *MMC3BmcF15) ReadPRG(addr uint16) byte {
 		page = ((bank & mask) | mode) << 1
 	}
 	page |= int(addr>>13) & 1
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 // Save writes the board's mapper-specific state into s.
@@ -213,11 +213,11 @@ func (m *MMC3199) ReadPRG(addr uint16) byte {
 	}
 	switch addr >> 13 & 3 {
 	case 2: // $C000 -> exReg0
-		return window(m.prg, int(m.exReg[0]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.exReg[0]), 0x2000)[addr&0x1FFF]
 	case 3: // $E000 -> exReg1
-		return window(m.prg, int(m.exReg[1]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.exReg[1]), 0x2000)[addr&0x1FFF]
 	default:
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	}
 }
 
@@ -242,16 +242,16 @@ func (m *MMC3199) chr2K(addr uint16) (page int, ram bool) {
 func (m *MMC3199) ReadCHR(addr uint16) byte {
 	page, ram := m.chr2K(addr)
 	if ram {
-		return window(m.chrRAM[:], page, 0x800)[addr&0x7FF]
+		return m.win(m.chrRAM[:], page, 0x800)[addr&0x7FF]
 	}
-	return window(m.chr, page, 0x800)[addr&0x7FF]
+	return m.win(m.chr, page, 0x800)[addr&0x7FF]
 }
 
 // WriteCHR handles a write into the CHR address space.
 func (m *MMC3199) WriteCHR(addr uint16, v byte) {
 	page, ram := m.chr2K(addr)
 	if ram {
-		window(m.chrRAM[:], page, 0x800)[addr&0x7FF] = v
+		m.win(m.chrRAM[:], page, 0x800)[addr&0x7FF] = v
 	}
 }
 
@@ -327,7 +327,7 @@ func (m *MMC3MaliSB) ReadPRG(addr uint16) byte {
 	if p < 0 {
 		p += n
 	}
-	return window(m.prg, scrambleMaliPRG(p), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, scrambleMaliPRG(p), 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3MaliSB) chrPage(addr uint16) int { return scrambleMaliCHR(m.chrPage1K(addr)) }
@@ -402,7 +402,7 @@ func (m *MMC3StreetHeroes) ReadCHR(addr uint16) byte {
 		a ^= 0x1000
 	}
 	page := m.chrPage1K(addr) | m.chrHighBit(int(a>>10&7))
-	return window(m.chr, page, 0x400)[addr&0x3FF]
+	return m.win(m.chr, page, 0x400)[addr&0x3FF]
 }
 
 // WriteCHR handles a write into the CHR address space.
@@ -481,7 +481,7 @@ func (m *BmcGn45) ReadPRG(addr uint16) byte {
 		p += n
 	}
 	page := p&0x0F | int(m.block)
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *BmcGn45) chrPage(addr uint16) int {
@@ -551,14 +551,14 @@ func (m *Unl158B) ReadPRG(addr uint16) byte {
 		} else { // 16 KiB mirrored
 			page = bank<<1 | int(addr>>13&1)
 		}
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	p := m.prgBank(addr)
 	n := len(m.prg) / 0x2000
 	if p < 0 {
 		p += n
 	}
-	return window(m.prg, p&0x0F, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, p&0x0F, 0x2000)[addr&0x1FFF]
 }
 
 // Save writes the board's mapper-specific state into s.
@@ -598,7 +598,7 @@ func (m *MMC3Bmc411120C) ReadPRG(addr uint16) byte {
 	}
 	if m.exReg&0x08 != 0 { // forced 32 KiB (DIP=0)
 		page := (int(m.exReg>>4)&0x03|0x0C)<<2 | int(addr>>13&3)
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	p := m.prgBank(addr)
 	n := len(m.prg) / 0x2000
@@ -606,7 +606,7 @@ func (m *MMC3Bmc411120C) ReadPRG(addr uint16) byte {
 		p += n
 	}
 	page := p&0x0F | int(m.exReg&0x03)<<4
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3Bmc411120C) chrPage(addr uint16) int {
@@ -690,7 +690,7 @@ func (m *MMC3208) ReadPRG(addr uint16) byte {
 	}
 	if addr >= 0x8000 {
 		page := int(m.exRegs[5])<<2 | int(addr>>13&3)
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }
@@ -744,7 +744,7 @@ func (m *MMC3198) ReadPRG(addr uint16) byte {
 	}
 	if addr >= 0x8000 {
 		slot := int((addr - 0x8000) >> 13)
-		return window(m.prg, int(m.exRegs[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.exRegs[slot]), 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }
@@ -821,7 +821,7 @@ func (m *Bmc8in1) ReadPRG(addr uint16) byte {
 	if m.reg&0x10 == 0 {
 		// Forced 32 KiB bank from the block.
 		page := (int(m.reg&0x0F) << 2) | int(addr>>13&3)
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	p := m.prgBank(addr)
 	n := len(m.prg) / 0x2000
@@ -829,7 +829,7 @@ func (m *Bmc8in1) ReadPRG(addr uint16) byte {
 		p += n
 	}
 	page := (int(m.reg&0x0C) << 2) | (p & 0x0F)
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *Bmc8in1) chrPage(addr uint16) int {
@@ -918,7 +918,7 @@ func (m *MMC3219) ReadPRG(addr uint16) byte {
 		return m.MMC3.ReadPRG(addr)
 	}
 	slot := int((addr - 0x8000) >> 13)
-	return window(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
 }
 
 // ReadCHR returns the byte the CHR address space maps at addr.
@@ -1045,14 +1045,14 @@ func (m *MMC3217) ReadPRG(addr uint16) byte {
 		// Forced 32 KiB bank.
 		v := int(m.exReg[0]&0x0F) | int(m.exReg[1]<<4)&0x30
 		page := m.prgBankOuter((v << 1) | int(addr>>13&1))
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	p := m.prgBank(addr)
 	n := len(m.prg) / 0x2000
 	if p < 0 {
 		p += n
 	}
-	return window(m.prg, m.prgBankOuter(p), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgBankOuter(p), 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3217) chrPageOuter(page int) int {
@@ -1198,7 +1198,7 @@ func (m *MMC3215) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
 }
 
 // Save writes the board's mapper-specific state into s.
@@ -1273,7 +1273,7 @@ func (m *MMC3126) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgPage(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgPage(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3126) chrPage(addr uint16) int {
@@ -1393,7 +1393,7 @@ func (m *BmcHpxx) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
 }
 
 // Mirroring reports the board's current nametable mirroring.
@@ -1540,7 +1540,7 @@ func (m *MMC3121) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3121) chrPage(addr uint16) int {
@@ -1678,13 +1678,13 @@ func (m *MMC314) ReadPRG(addr uint16) byte {
 	}
 	switch addr >> 13 & 3 {
 	case 0:
-		return window(m.prg, int(m.vrcPrg[0]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.vrcPrg[0]), 0x2000)[addr&0x1FFF]
 	case 1:
-		return window(m.prg, int(m.vrcPrg[1]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.vrcPrg[1]), 0x2000)[addr&0x1FFF]
 	case 2:
-		return window(m.prg, -2, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -2, 0x2000)[addr&0x1FFF]
 	default:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	}
 }
 
@@ -1878,7 +1878,7 @@ func (m *Mapper116) prgSlot(slot int) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper116) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgSlot(int((addr-0x8000)>>13)), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)

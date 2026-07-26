@@ -92,10 +92,10 @@ func NewVRC1(c *cartridge.Cartridge) *VRC1 {
 func (m *VRC1) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
 		bank := m.prgBanks[(addr-0x8000)>>13]
-		return window(m.prg, int(bank), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(bank), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -183,9 +183,9 @@ func NewVRC3(c *cartridge.Cartridge) *VRC3 {
 func (m *VRC3) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

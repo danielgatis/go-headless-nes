@@ -37,16 +37,16 @@ func (m *MMC2) ReadPRG(addr uint16) byte {
 		if m.mmc4 {
 			// 16 KiB switchable + fixed last bank.
 			if addr < 0xC000 {
-				return window(m.prg, int(m.prgReg&0x0F), 0x4000)[addr&0x3FFF]
+				return m.win(m.prg, int(m.prgReg&0x0F), 0x4000)[addr&0x3FFF]
 			}
-			return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 		}
 		// MMC2: 8 KiB switchable, last three banks fixed.
 		if addr < 0xA000 {
-			return window(m.prg, int(m.prgReg&0x0F), 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, int(m.prgReg&0x0F), 0x2000)[addr&0x1FFF]
 		}
 		bank := -3 + int(addr-0xA000)>>13
-		return window(m.prg, bank, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, bank, 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

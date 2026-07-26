@@ -34,7 +34,7 @@ func (m *DxROM) ReadPRG(addr uint16) byte {
 	default:
 		bank = -1
 	}
-	return window(m.prg, bank, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, bank, 0x2000)[addr&0x1FFF]
 }
 
 // WritePRG handles a CPU write into the PRG address space ($6000-$FFFF).

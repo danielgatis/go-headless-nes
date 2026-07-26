@@ -47,9 +47,9 @@ func (m *Supervision) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
 		slot := int((addr - 0x8000) >> 13)
-		return window(m.prg, m.prg8(slot), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prg8(slot), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
-		return window(m.prg, m.rBase()<<1|0x0F, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.rBase()<<1|0x0F, 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -118,7 +118,7 @@ func (m *Bs5) WritePRG(addr uint16, _ byte) {
 func (m *Bs5) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		slot := (addr - 0x8000) >> 13
-		return window(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -186,9 +186,9 @@ func (m *Hp898f) update() {
 func (m *Hp898f) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -271,17 +271,17 @@ func (m *Bmc60311C) ReadPRG(addr uint16) byte {
 	p := m.page()
 	switch m.mode & 0x03 {
 	case 0: // NROM-128
-		return window(m.prg, p, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, p, 0x4000)[addr&0x3FFF]
 	case 1: // NROM-256
 		bank := (p & 0xFE) + int(addr>>14&1)
-		return window(m.prg, bank, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, bank, 0x4000)[addr&0x3FFF]
 	case 2: // UNROM
 		if addr >= 0xC000 {
-			return window(m.prg, int(m.outer)|7, 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, int(m.outer)|7, 0x4000)[addr&0x3FFF]
 		}
-		return window(m.prg, p, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, p, 0x4000)[addr&0x3FFF]
 	default:
-		return window(m.prg, p, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, p, 0x4000)[addr&0x3FFF]
 	}
 }
 
@@ -357,9 +357,9 @@ func (m *Bmc830425C4391T) prg1() int {
 func (m *Bmc830425C4391T) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, m.prg1(), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg1(), 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prg0(), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg0(), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -416,9 +416,9 @@ func (m *Kaiser7013B) WritePRG(addr uint16, v byte) {
 func (m *Kaiser7013B) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

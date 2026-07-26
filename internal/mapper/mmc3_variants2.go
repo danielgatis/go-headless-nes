@@ -62,7 +62,7 @@ func (m *MMC3ChrRAM) ReadCHR(addr uint16) byte {
 	if p := m.chrRAMPage(page); p >= 0 {
 		return m.chrRAM[p<<10|int(addr&0x3FF)]
 	}
-	return window(m.chr, page, 0x400)[addr&0x3FF]
+	return m.win(m.chr, page, 0x400)[addr&0x3FF]
 }
 
 // WriteCHR handles a write into the CHR address space.
@@ -116,11 +116,11 @@ func (m *MMC3115) ReadPRG(addr uint16) byte {
 		if m.prgReg&0x20 != 0 {
 			// 32 KiB mode: four contiguous 8 KiB pages from ((reg&0x0F)>>1)<<2.
 			page := int((m.prgReg&0x0F)>>1)<<2 | int(addr>>13&3)
-			return window(m.prg, page, 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 		}
 		// 16 KiB mode: the same 16 KiB bank mirrors into $8000 and $C000.
 		page := int(m.prgReg&0x0F)<<1 | int(addr>>13&1)
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }
@@ -192,7 +192,7 @@ func (m *MMC3165) ReadCHR(addr uint16) byte {
 	if reg == 0 {
 		v = m.chrRAM[addr&0x0FFF] // 4 KiB CHR RAM at bank 0
 	} else {
-		v = window(m.chr, int(reg)>>2, 0x1000)[addr&0x0FFF]
+		v = m.win(m.chr, int(reg)>>2, 0x1000)[addr&0x0FFF]
 	}
 	m.updateLatch(addr)
 	return v

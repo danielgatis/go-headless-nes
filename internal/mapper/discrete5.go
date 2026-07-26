@@ -61,9 +61,9 @@ func (m *Mapper221) update() {
 func (m *Mapper221) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, m.prg0, 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -132,9 +132,9 @@ func (m *MagicKidGooGoo) WritePRG(addr uint16, v byte) {
 func (m *MagicKidGooGoo) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF] // fixed last 16 KiB
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF] // fixed last 16 KiB
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prg0), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prg0), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -204,13 +204,13 @@ func (m *NtdecTc112) WritePRG(addr uint16, v byte) {
 func (m *NtdecTc112) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0xC000:
-		return window(m.prg, -2, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -2, 0x2000)[addr&0x1FFF]
 	case addr >= 0xA000:
-		return window(m.prg, -3, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -3, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prg0), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prg0), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

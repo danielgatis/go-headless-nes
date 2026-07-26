@@ -47,7 +47,7 @@ func (m *Waixing162) prgBank() int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Waixing162) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank(), 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -98,7 +98,7 @@ func (m *Waixing164) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Waixing164) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.prgBank), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.prgBank), 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -176,9 +176,9 @@ func (m *Waixing178) ReadPRG(addr uint16) byte {
 	}
 	b0, b1 := m.prgSlots()
 	if addr < 0xC000 {
-		return window(m.prg, b0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, b0, 0x4000)[addr&0x3FFF]
 	}
-	return window(m.prg, b1, 0x4000)[addr&0x3FFF]
+	return m.win(m.prg, b1, 0x4000)[addr&0x3FFF]
 }
 
 // ReadCHR returns the byte the CHR address space maps at addr.
@@ -265,7 +265,7 @@ func (m *Waixing252) prgBank(addr uint16) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Waixing252) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)

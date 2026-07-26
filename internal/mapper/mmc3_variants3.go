@@ -193,7 +193,7 @@ func (m *MMC3205) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgSelect(addr), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgSelect(addr), 0x2000)[addr&0x1FFF]
 }
 
 // ReadCHR returns the byte the CHR address space maps at addr.
@@ -270,7 +270,7 @@ func (m *MMC3196) WritePRG(addr uint16, v byte) {
 func (m *MMC3196) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 && m.prgOverride {
 		page := int(m.prg32)<<2 | int(addr>>13&3)
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }
@@ -347,7 +347,7 @@ func (m *MMC3245) ReadPRG(addr uint16) byte {
 	if addr < 0x8000 {
 		return m.MMC3.ReadPRG(addr)
 	}
-	return window(m.prg, m.prgSlot(int(addr>>13&3)), 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, m.prgSlot(int(addr>>13&3)), 0x2000)[addr&0x1FFF]
 }
 
 // ReadCHR returns the byte the CHR address space maps at addr.

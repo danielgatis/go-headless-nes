@@ -24,7 +24,7 @@ func NewSachen9602(c *cartridge.Cartridge) *Sachen9602 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Sachen9602) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank9602(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank9602(addr), 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }

@@ -18,7 +18,27 @@ type base struct {
 	// the bus before each cartridge-port read so an undecoded read returns
 	// the real floating value rather than a fabricated one.
 	openBusVal byte
+
+	// probe drives the debug bank-map query (ProbeBankMap). While probeOn,
+	// win records the ROM offset and window size it last resolved, so the
+	// query can read back which bank a ReadPRG/ReadCHR landed on. It is off
+	// in normal operation, costing win one predictable branch per read.
+	probeOn     bool
+	probeOffset int
+	probeSize   int
 }
+
+// probeBegin arms bank-map probing; probeEnd disarms it.
+func (b *base) probeBegin() { b.probeOn = true }
+func (b *base) probeEnd()   { b.probeOn = false }
+
+// probeReset clears the last recorded window before a probing read, so a
+// read that resolves no window (open bus, PRG RAM, direct indexing) leaves
+// probeSize zero and is reported as an unknown bank.
+func (b *base) probeReset() { b.probeSize = 0 }
+
+// probeResult returns the offset and window size win last recorded.
+func (b *base) probeResult() (offset, size int) { return b.probeOffset, b.probeSize }
 
 func makeBase(c *cartridge.Cartridge) base {
 	return base{
@@ -56,26 +76,18 @@ func (b *base) writePRGRAM(addr uint16, v byte) {
 	b.prgRAM[addr&0x1FFF] = v
 }
 
-// chrSize is the size of the board's CHR memory, ROM or RAM.
-func (b *base) chrSize() int {
-	if b.chr != nil {
-		return len(b.chr)
-	}
-	return len(b.chrRAM)
-}
-
 // chrRead reads CHR ROM or RAM through the given bank window.
 func (b *base) chrRead(bank, size int, addr uint16) byte {
 	if b.chr != nil {
-		return window(b.chr, bank, size)[int(addr)%size]
+		return b.win(b.chr, bank, size)[int(addr)%size]
 	}
-	return window(b.chrRAM[:], bank, size)[int(addr)%size]
+	return b.win(b.chrRAM[:], bank, size)[int(addr)%size]
 }
 
 // chrWrite writes CHR RAM (CHR ROM ignores writes, as on hardware).
 func (b *base) chrWrite(bank, size int, addr uint16, v byte) {
 	if b.chr == nil {
-		window(b.chrRAM[:], bank, size)[int(addr)%size] = v
+		b.win(b.chrRAM[:], bank, size)[int(addr)%size] = v
 	}
 }
 
@@ -107,16 +119,24 @@ func (b *base) openBus() byte {
 	return b.openBusVal
 }
 
-// window returns the bank'th size-byte view of mem. Banks count from
-// the end when negative (-1 is the last bank) and wrap modulo the
-// number of banks, matching unconnected high address lines on smaller
-// ROMs. Cartridge loading mirrors PRG up to 32 KiB, so mem always
-// holds at least one full window.
-func window(mem []byte, bank, size int) []byte {
+// win returns the bank'th size-byte view of mem. Banks count from the end
+// when negative (-1 is the last bank) and wrap modulo the number of banks,
+// matching unconnected high address lines on smaller ROMs. Cartridge
+// loading mirrors PRG up to 32 KiB, so mem always holds at least one full
+// window.
+//
+// It is a base method (rather than a free function) so a debug bank-map
+// probe can record the resolved window per board without a package global,
+// which keeps independent consoles race-free.
+func (b *base) win(mem []byte, bank, size int) []byte {
 	n := len(mem) / size
 	bank %= n
 	if bank < 0 {
 		bank += n
+	}
+	if b.probeOn {
+		b.probeOffset = bank * size
+		b.probeSize = size
 	}
 	return mem[bank*size : (bank+1)*size]
 }

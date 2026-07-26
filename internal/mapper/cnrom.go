@@ -18,7 +18,9 @@ func NewCNROM(c *cartridge.Cartridge) *CNROM {
 func (m *CNROM) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return m.prg[int(addr-0x8000)%len(m.prg)]
+		// Fixed PRG, routed through win (a single whole-ROM window) so a
+		// bank-map probe sees it; a 16 KiB ROM mirrors across the window.
+		return m.win(m.prg, 0, len(m.prg))[int(addr-0x8000)%len(m.prg)]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

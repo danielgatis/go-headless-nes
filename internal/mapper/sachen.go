@@ -28,7 +28,7 @@ func (m *Sachen133) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Sachen133) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -72,7 +72,7 @@ func (m *Sachen143) ReadPRG(addr uint16) byte {
 	}
 	if addr >= 0x8000 {
 		// Two fixed 16 KiB PRG banks (0 at $8000, 1 at $C000).
-		return window(m.prg, int((addr-0x8000)>>14), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int((addr-0x8000)>>14), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -111,7 +111,7 @@ func (m *Sachen145) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Sachen145) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -152,7 +152,7 @@ func (m *Sachen148) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Sachen148) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, m.prgBank, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -199,7 +199,7 @@ func (m *Sachen149) WritePRG(addr uint16, v byte) {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Sachen149) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -240,7 +240,7 @@ func (m *Sachen136) ReadPRG(addr uint16) byte {
 		return out
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -293,7 +293,7 @@ func (m *Sachen147) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		out := m.txc.output
 		bank := int(out&0x20)>>4 | int(out&0x01)
-		return window(m.prg, bank, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, bank, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -373,7 +373,7 @@ func (m *Sachen74LS374N) ReadPRG(addr uint16) byte {
 		return m.openBus()&0xF8 | m.regs[m.currentReg]&0x07
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.regs[5]&0x03), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.regs[5]&0x03), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }

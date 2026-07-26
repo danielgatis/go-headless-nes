@@ -146,7 +146,7 @@ func (m *MMC5) wramWritable() bool {
 }
 
 func (m *MMC5) wramWindow(bank int) []byte {
-	return window(m.wram[:], bank&0x07, 0x2000)
+	return m.win(m.wram[:], bank&0x07, 0x2000)
 }
 
 // ReadPRG returns the byte the PRG address space maps at addr.
@@ -160,14 +160,14 @@ func (m *MMC5) ReadPRG(addr uint16) byte {
 		m.irqPending = false
 		reg, page := m.prgSlot(addr)
 		_ = reg
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
 		reg, page := m.prgSlot(addr)
 		var v byte
 		if m.prgIsRAM(reg) {
 			v = m.wramWindow(int(m.prgBanks[reg]))[addr&0x1FFF]
 		} else {
-			v = window(m.prg, page, 0x2000)[addr&0x1FFF]
+			v = m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 		}
 		if m.pcmReadMode && addr&0xC000 == 0x8000 {
 			// PCM read mode: every CPU read from $8000-$BFFF feeds the DAC.

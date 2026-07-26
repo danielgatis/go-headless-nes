@@ -165,11 +165,11 @@ func (m *VRC24) prgBank(addr uint16) int {
 func (m *VRC24) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if m.variant == vrc4183 {
 			// 183 maps a switchable 8 KiB PRG-ROM bank here (read-only).
-			return window(m.prg, int(m.prg6000), 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, int(m.prg6000), 0x2000)[addr&0x1FFF]
 		}
 		return m.readPRGRAM(addr)
 	}

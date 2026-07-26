@@ -84,11 +84,12 @@ type CartInfo struct {
 }
 
 // MapperInfo is the decoded mapper state a mapper-view panel shows: the
-// number, current mirroring, and the live bank layout when the board reports
-// it. PRGBanks holds one 8 KiB bank index per CPU window ($8000, $A000,
-// $C000, $E000); CHRBanks holds one 1 KiB bank index per PPU window from
-// $0000. Both are nil (and HasBankInfo false) for a board whose banking is
-// not yet decoded, in which case MapperState still gives the raw registers.
+// number, current mirroring and the live bank layout. PRGBanks holds one
+// 8 KiB bank index per CPU window ($8000, $A000, $C000, $E000); CHRBanks
+// holds one 1 KiB bank index per PPU window from $0000. An individual entry
+// is -1 when the board does not map that window through a switchable bank
+// (open bus, PRG RAM, or a window it addresses without the bank helper); for
+// those, MapperState still gives the raw registers.
 type MapperInfo struct {
 	ID          uint16
 	Submapper   byte
@@ -98,22 +99,19 @@ type MapperInfo struct {
 	HasBankInfo bool
 }
 
-// MapperInfo reports the current decoded mapper state.
+// MapperInfo reports the current decoded mapper state. It probes the live
+// bank layout by reading one byte per window; the board is snapshotted and
+// restored around the probe, so it has no net effect on the machine.
 func (c *Console) MapperInfo() MapperInfo {
-	m := c.core.Mapper
-	info := MapperInfo{
-		ID:        c.core.Cart.MapperID,
-		Submapper: c.core.Cart.Submapper,
-		Mirroring: m.Mirroring().String(),
+	bm := mapper.ProbeBankMap(c.core.Mapper)
+	return MapperInfo{
+		ID:          c.core.Cart.MapperID,
+		Submapper:   c.core.Cart.Submapper,
+		Mirroring:   c.core.Mapper.Mirroring().String(),
+		PRGBanks:    bm.PRG[:],
+		CHRBanks:    bm.CHR[:],
+		HasBankInfo: true,
 	}
-	if bm, ok := m.(mapper.BankMapper); ok {
-		p := bm.PRGBankMap()
-		ch := bm.CHRBankMap()
-		info.PRGBanks = p[:]
-		info.CHRBanks = ch[:]
-		info.HasBankInfo = true
-	}
-	return info
 }
 
 // Mirroring reports the board's current nametable mirroring as text

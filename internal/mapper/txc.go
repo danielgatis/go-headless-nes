@@ -122,7 +122,7 @@ func (m *Txc22000) ReadPRG(addr uint16) byte {
 		return out
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.txc.output&0x03), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.txc.output&0x03), 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -175,7 +175,7 @@ func (m *Txc22211A) ReadPRG(addr uint16) byte {
 		return out
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.txc.output>>2)&0x01, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.txc.output>>2)&0x01, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -236,7 +236,7 @@ func (m *Txc22211B) ReadPRG(addr uint16) byte {
 		return out
 	}
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)
@@ -282,7 +282,7 @@ func NewTxc22211C(c *cartridge.Cartridge) *Txc22211C {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Txc22211C) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF] // PRG fixed to bank 0
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF] // PRG fixed to bank 0
 	}
 	return m.Txc22211A.ReadPRG(addr)
 }

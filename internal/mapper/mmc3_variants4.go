@@ -62,7 +62,7 @@ func (m *MMC3114) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 && m.exReg0&0x80 != 0 {
 		// Forced 16 KiB bank mirrored into both halves.
 		page := int(m.exReg0&0x0F)<<1 | int(addr>>13&1)
-		return window(m.prg, page, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 	}
 	return m.MMC3.ReadPRG(addr)
 }
@@ -137,7 +137,7 @@ func (m *MMC3123) prg123Bank(addr uint16) int {
 func (m *MMC3123) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		if b := m.prg123Bank(addr); b >= 0 {
-			return window(m.prg, b, 0x2000)[addr&0x1FFF]
+			return m.win(m.prg, b, 0x2000)[addr&0x1FFF]
 		}
 	}
 	return m.MMC3.ReadPRG(addr)
@@ -191,7 +191,7 @@ func (m *MMC3134) ReadPRG(addr uint16) byte {
 		p += n
 	}
 	page := p&0x1F | int(m.exReg&0x02)<<4
-	return window(m.prg, page, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, page, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3134) chrPage(addr uint16) int {
@@ -257,7 +257,7 @@ func (m *MMC3249) ReadPRG(addr uint16) byte {
 	if m.exReg&0x02 != 0 {
 		p = scramble249PRG(p)
 	}
-	return window(m.prg, p, 0x2000)[addr&0x1FFF]
+	return m.win(m.prg, p, 0x2000)[addr&0x1FFF]
 }
 
 func (m *MMC3249) chrPage(addr uint16) int {

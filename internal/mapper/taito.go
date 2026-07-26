@@ -25,9 +25,9 @@ func (m *TaitoTC0190) ReadPRG(addr uint16) byte {
 		if addr >= 0xE000 {
 			bank = -1
 		}
-		return window(m.prg, bank, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, bank, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -239,9 +239,9 @@ func NewTaitoX1005(c *cartridge.Cartridge) *TaitoX1005 {
 func (m *TaitoX1005) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x7F00:
 		if m.ramPerm == 0xA3 {
 			return m.ram[addr&0x7F]
@@ -405,9 +405,9 @@ func (m *TaitoX1017) ramSectionOpen(addr uint16) bool {
 func (m *TaitoX1017) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000 && addr < 0x7400:
 		if m.ramSectionOpen(addr) {
 			return m.readPRGRAM(addr)

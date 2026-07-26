@@ -157,7 +157,7 @@ func (m *Fk23C) chrIsRAM(page int) bool {
 func (m *Fk23C) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		if m.wramConfigEnabled {
 			return m.wram[int(m.wramBank)<<13|int(addr&0x1FFF)]
@@ -278,7 +278,7 @@ func (m *Fk23C) ReadCHR(addr uint16) byte {
 	if m.chrIsRAM(page) {
 		return m.bigCHR[(page<<10|int(addr&0x3FF))%len(m.bigCHR)]
 	}
-	return window(m.chr, page, 0x400)[addr&0x3FF]
+	return m.win(m.chr, page, 0x400)[addr&0x3FF]
 }
 
 // WriteCHR handles a write into the CHR address space.

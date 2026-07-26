@@ -106,7 +106,7 @@ func (m *FrontFareast) setCHR8(base int) {
 func (m *FrontFareast) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		slot := (addr - 0x8000) >> 13
-		return window(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgReg[slot]), 0x2000)[addr&0x1FFF]
 	}
 	if addr >= 0x6000 {
 		return m.readPRGRAM(addr)

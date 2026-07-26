@@ -69,7 +69,7 @@ func (m *MMC1Event) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
 		if m.initState < 2 {
-			return window(m.prg, int(addr>>14)&1, 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, int(addr>>14)&1, 0x4000)[addr&0x3FFF]
 		}
 		if m.chr0&0x08 != 0 {
 			// MMC1 modes over the upper 128 KiB (banks 8-15).
@@ -78,24 +78,24 @@ func (m *MMC1Event) ReadPRG(addr uint16) byte {
 			switch m.control >> 2 & 3 {
 			case 0, 1: // 32 KiB
 				if low {
-					return window(m.prg, bank&^1, 0x4000)[addr&0x3FFF]
+					return m.win(m.prg, bank&^1, 0x4000)[addr&0x3FFF]
 				}
-				return window(m.prg, bank|1, 0x4000)[addr&0x3FFF]
+				return m.win(m.prg, bank|1, 0x4000)[addr&0x3FFF]
 			case 2:
 				if low {
-					return window(m.prg, 0x08, 0x4000)[addr&0x3FFF]
+					return m.win(m.prg, 0x08, 0x4000)[addr&0x3FFF]
 				}
-				return window(m.prg, bank, 0x4000)[addr&0x3FFF]
+				return m.win(m.prg, bank, 0x4000)[addr&0x3FFF]
 			default:
 				if low {
-					return window(m.prg, bank, 0x4000)[addr&0x3FFF]
+					return m.win(m.prg, bank, 0x4000)[addr&0x3FFF]
 				}
-				return window(m.prg, 0x0F, 0x4000)[addr&0x3FFF]
+				return m.win(m.prg, 0x0F, 0x4000)[addr&0x3FFF]
 			}
 		}
 		// 32 KiB outer mode from the CHR register.
 		bank := int(m.chr0&0x06) | int(addr>>14)&1
-		return window(m.prg, bank, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, bank, 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		if m.ramDisabled() {
 			return m.openBus()

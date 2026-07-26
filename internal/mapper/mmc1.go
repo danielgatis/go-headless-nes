@@ -81,7 +81,7 @@ func (m *MMC1) prgBankNum(addr uint16) int {
 // prgWindow resolves the 16 KiB bank visible at addr under the current
 // PRG mode.
 func (m *MMC1) prgWindow(addr uint16) []byte {
-	return window(m.prg, m.prgBankNum(addr), 0x4000)
+	return m.win(m.prg, m.prgBankNum(addr), 0x4000)
 }
 
 // WritePRG handles a CPU write into the PRG address space ($6000-$FFFF).
@@ -218,7 +218,7 @@ func (m *FaridSlrom) WritePRG(addr uint16, v byte) {
 func (m *FaridSlrom) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
 		bank := int(m.outerBank) | (m.prgBankNum(addr) & 0x07)
-		return window(m.prg, bank, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, bank, 0x4000)[addr&0x3FFF]
 	}
 	return m.MMC1.ReadPRG(addr)
 }

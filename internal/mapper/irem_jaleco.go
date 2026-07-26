@@ -54,7 +54,7 @@ func (m *IremG101) prgBank(addr uint16) int {
 func (m *IremG101) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0x8000:
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -144,9 +144,9 @@ func NewIremH3001(c *cartridge.Cartridge) *IremH3001 {
 func (m *IremH3001) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -256,9 +256,9 @@ func NewIremTamS1(c *cartridge.Cartridge) *IremTamS1 {
 func (m *IremTamS1) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -325,9 +325,9 @@ func NewJalecoJF16(c *cartridge.Cartridge) *JalecoJF16 {
 func (m *JalecoJF16) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -405,14 +405,14 @@ func (m *JalecoJF17) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
 		if m.jf19 {
-			return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 		}
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
 		if m.jf19 {
-			return window(m.prg, 0, 0x4000)[addr&0x3FFF]
+			return m.win(m.prg, 0, 0x4000)[addr&0x3FFF]
 		}
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -498,9 +498,9 @@ func NewJalecoSS88006(c *cartridge.Cartridge) *JalecoSS88006 {
 func (m *JalecoSS88006) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xE000:
-		return window(m.prg, -1, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, -1, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.prgBanks[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}

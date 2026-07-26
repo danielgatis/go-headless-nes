@@ -105,9 +105,9 @@ func (m *Action53) ReadPRG(addr uint16) byte {
 	}
 	b0, b1 := m.prgBanks()
 	if addr < 0xC000 {
-		return window(m.prg, b0, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, b0, 0x4000)[addr&0x3FFF]
 	}
-	return window(m.prg, b1, 0x4000)[addr&0x3FFF]
+	return m.win(m.prg, b1, 0x4000)[addr&0x3FFF]
 }
 
 // ReadCHR returns the byte the CHR address space maps at addr.

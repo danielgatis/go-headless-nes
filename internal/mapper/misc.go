@@ -21,7 +21,7 @@ func NewCpROM(c *cartridge.Cartridge) *CpROM {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *CpROM) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -104,7 +104,7 @@ func (m *Mapper15) prgBank(addr uint16) int {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper15) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, m.prgBank(addr), 0x2000)[addr&0x1FFF]
 	}
 	return m.openBus()
 }
@@ -166,7 +166,7 @@ func NewPCI556(c *cartridge.Cartridge) *PCI556 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *PCI556) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg&0x03), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg&0x03), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -217,9 +217,9 @@ func NewBandai74161(c *cartridge.Cartridge) *Bandai74161 {
 func (m *Bandai74161) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }
@@ -291,7 +291,7 @@ func NewIremLROG017(c *cartridge.Cartridge) *IremLROG017 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *IremLROG017) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg&0x0F), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg&0x0F), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -307,7 +307,7 @@ func (m *IremLROG017) WritePRG(addr uint16, v byte) {
 // ReadCHR returns the byte the CHR address space maps at addr.
 func (m *IremLROG017) ReadCHR(addr uint16) byte {
 	if addr < 0x800 {
-		return window(m.chr, int(m.reg>>4)&0x0F, 0x800)[addr&0x7FF]
+		return m.win(m.chr, int(m.reg>>4)&0x0F, 0x800)[addr&0x7FF]
 	}
 	return m.chrRAM[addr-0x800]
 }
@@ -342,7 +342,7 @@ func NewJalecoJF13(c *cartridge.Cartridge) *JalecoJF13 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *JalecoJF13) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.prgBank), 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.prgBank), 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -395,7 +395,7 @@ func NewJaleco101(c *cartridge.Cartridge) *Jaleco101 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Jaleco101) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -438,7 +438,7 @@ func NewMapper107(c *cartridge.Cartridge) *Mapper107 {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *Mapper107) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, int(m.reg)>>1, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, int(m.reg)>>1, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -491,9 +491,9 @@ func (m *Mapper112) ReadPRG(addr uint16) byte {
 		if addr >= 0xE000 {
 			bank = -1
 		}
-		return window(m.prg, bank, 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, bank, 0x2000)[addr&0x1FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.regs[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
+		return m.win(m.prg, int(m.regs[(addr-0x8000)>>13]), 0x2000)[addr&0x1FFF]
 	case addr >= 0x6000:
 		return m.readPRGRAM(addr)
 	}
@@ -586,7 +586,7 @@ func NewCNROMProtect(c *cartridge.Cartridge) *CNROMProtect {
 // ReadPRG returns the byte the PRG address space maps at addr.
 func (m *CNROMProtect) ReadPRG(addr uint16) byte {
 	if addr >= 0x8000 {
-		return window(m.prg, 0, 0x8000)[addr&0x7FFF]
+		return m.win(m.prg, 0, 0x8000)[addr&0x7FFF]
 	}
 	return m.openBus()
 }
@@ -665,9 +665,9 @@ func NewUNROM512(c *cartridge.Cartridge) *UNROM512 {
 func (m *UNROM512) ReadPRG(addr uint16) byte {
 	switch {
 	case addr >= 0xC000:
-		return window(m.prg, -1, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, -1, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
-		return window(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, int(m.prgBank), 0x4000)[addr&0x3FFF]
 	}
 	return m.openBus()
 }

@@ -74,7 +74,7 @@ func (m *TQROM) ReadCHR(addr uint16) byte {
 	if p&0x40 != 0 {
 		return m.chrRAM[(p&0x07)<<10|int(addr&0x3FF)]
 	}
-	return window(m.chr, p&0x3F, 0x400)[addr&0x3FF]
+	return m.win(m.chr, p&0x3F, 0x400)[addr&0x3FF]
 }
 
 // WriteCHR handles a write into the CHR address space.

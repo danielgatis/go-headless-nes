@@ -28,7 +28,7 @@ func (m *BandaiKaraoke) ReadPRG(addr uint16) byte {
 	case addr >= 0xC000:
 		// Fixed to the last bank of the internal ROM (bank 7 of 512 KiB;
 		// window wraps for smaller dumps).
-		return window(m.prg, 7, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, 7, 0x4000)[addr&0x3FFF]
 	case addr >= 0x8000:
 		bank := int(m.prgBank)
 		if m.expandOn {
@@ -38,7 +38,7 @@ func (m *BandaiKaraoke) ReadPRG(addr uint16) byte {
 			}
 			bank |= 0x08
 		}
-		return window(m.prg, bank, 0x4000)[addr&0x3FFF]
+		return m.win(m.prg, bank, 0x4000)[addr&0x3FFF]
 	case addr >= 0x6000:
 		// Microphone port: bit 0-1 buttons (active low on hardware reads
 		// as 0 here), bit 2 mic level; upper bits float.
