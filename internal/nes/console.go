@@ -470,6 +470,10 @@ func (c *NES) Write(addr uint16, v byte) { c.mem.Write(addr, v) }
 // the CPU bus. See bus.Hooks.
 func (c *NES) SetBusHooks(h bus.Hooks) { c.mem.SetHooks(h) }
 
+// SetDotHook installs (or with nil clears) a per-PPU-dot callback, the
+// sub-instruction yield point a dot-exact stepper uses.
+func (c *NES) SetDotHook(fn func()) { c.PPU.SetDotHook(fn) }
+
 // MasterClock is the shared master-clock position in ticks since
 // power-on (21.477272 MHz on NTSC, 26.601712 MHz on PAL and Dendy).
 func (c *NES) MasterClock() uint64 { return c.CPU.MasterClock() }

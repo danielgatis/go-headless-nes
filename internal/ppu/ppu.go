@@ -247,7 +247,18 @@ type PPU struct {
 	// instant it changes. Nil in bare-PPU
 	// unit tests.
 	onNMI func(bool)
+
+	// onDot, when set, is called once per PPU dot after the dot completes,
+	// with the raster position already advanced. It is the sub-instruction
+	// yield point a dot-exact stepper installs; nil in normal operation, so
+	// Tick pays a single predictable nil check per dot.
+	onDot func()
 }
+
+// SetDotHook installs a per-dot callback, or removes it with nil. The
+// callback runs at the end of each PPU dot, deep inside the current CPU
+// instruction, so a stepper can suspend the machine at an exact dot.
+func (p *PPU) SetDotHook(fn func()) { p.onDot = fn }
 
 // New returns a PPU in power-up state attached to a cartridge board.
 func New(board Board) *PPU {
@@ -412,6 +423,9 @@ func (p *PPU) Tick() {
 	}
 	p.exec()
 	p.MasterClock += p.masterClockDivider
+	if p.onDot != nil {
+		p.onDot()
+	}
 }
 
 // Run advances the PPU until its master clock reaches runTo, executing at
